@@ -17,6 +17,16 @@ import {
 export function App() {
   const [view, setView] = useState<ViewState>(() => readView())
   const [epochSpan, setEpochSpan] = useState('')
+  // The pane's open or closed choice stays in this browser.
+  const [railOpen, setRailOpen] = useState(() => localStorage.getItem('ulysses-rail') !== 'closed')
+
+  function toggleRail() {
+    setRailOpen((open) => {
+      const next = !open
+      localStorage.setItem('ulysses-rail', next ? 'open' : 'closed')
+      return next
+    })
+  }
 
   function commit(aim: { ra: number; dec: number; label: string; source: AimSource }) {
     setEpochSpan('')
@@ -78,8 +88,8 @@ export function App() {
       <div className="rotate">
         <p>Turn the phone sideways. This sky is laid out for a landscape screen.</p>
       </div>
-      <div className="shell">
-        <InputRail view={view} onCommit={commit} onPatch={setPatch} />
+      <div className={railOpen ? 'shell' : 'shell is-rail-collapsed'}>
+        <InputRail view={view} collapsed={!railOpen} onToggle={toggleRail} onCommit={commit} onPatch={setPatch} />
         <main className="stage">
           <GuideMap view={view} onCommit={commit} onAim={aimFromMap} />
           <LoadSequence view={view} onLayer={setLayer} onEpochSpan={setEpochSpan} onMode={setMode} onBand={setBand} />

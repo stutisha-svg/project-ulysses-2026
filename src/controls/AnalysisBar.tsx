@@ -95,22 +95,22 @@ export function AnalysisBar({
 
   const active = MODES.find((item) => item.id === mode) ?? MODES[0]
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const usesBand = mode === 'blink' || mode === 'subtract' || mode === 'bands'
 
   return (
     <div className="analysis-bar">
-      <div ref={modeRef}>
+      <div ref={modeRef} className="analysis-modes">
         <md-outlined-segmented-button-set aria-label="Analysis">
           {MODES.map((item) => (
             <md-outlined-segmented-button key={item.id} label={item.label} title={item.tip} selected={mode === item.id}>
-              <svg slot="icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <svg slot="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
                 <path d={item.icon} fill="currentColor" />
               </svg>
             </md-outlined-segmented-button>
           ))}
         </md-outlined-segmented-button-set>
       </div>
-      <p className="analysis-copy">{explanation(mode, frameCount, reduced, active.tip)}</p>
-      {mode === 'bands' ? (
+      {usesBand ? (
         <div ref={bandRef} className="analysis-bands">
           <md-outlined-segmented-button-set aria-label="Spectrum group">
             <md-outlined-segmented-button
@@ -145,16 +145,30 @@ export function AnalysisBar({
             <input type="checkbox" checked={mask} onChange={(event) => onMask(event.target.checked)} />
             Hide unusable pixels
           </label>
-          {mask ? <p className="analysis-copy">{maskNote}</p> : null}
         </div>
       ) : null}
+      <p className="analysis-copy">{explanation(mode, band, frameCount, reduced, active.tip)}</p>
+      {mode === 'signal' && mask ? <p className="analysis-copy">{maskNote}</p> : null}
     </div>
   )
 }
 
-function explanation(mode: AnalysisMode, frameCount: number, reduced: boolean, tip: string): string {
+function explanation(
+  mode: AnalysisMode,
+  band: BandGroup,
+  frameCount: number,
+  reduced: boolean,
+  tip: string,
+): string {
+  const group =
+    band === 'hot'
+      ? 'Hot is the short infrared, about 0.9–1.4 μm.'
+      : 'Cold is the longer infrared, about 3–5 μm.'
   if (mode === 'blink' && frameCount < 2) return 'Need a second visit to blink.'
   if (mode === 'subtract' && frameCount < 2) return 'Need a second visit to subtract.'
-  if (mode === 'blink' && reduced) return 'Motion is reduced. Move through the visits to blink.'
+  if (mode === 'blink' && reduced) return `${group} Motion is reduced. Move through the visits to blink.`
+  if (mode === 'blink') return `${group} Blink steps through these visits in time order. It does not flip wavelengths.`
+  if (mode === 'subtract') return `${group} This is the current visit minus the first. Dark is fainter, light is brighter.`
+  if (mode === 'bands') return `${group} Blink stays in the group you pick.`
   return tip
 }

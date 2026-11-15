@@ -13,6 +13,8 @@ type MdSegment = HTMLElement & { selected: boolean; label: string }
 
 type InputRailProps = {
   view: ViewState
+  collapsed: boolean
+  onToggle: () => void
   onCommit: (aim: { ra: number; dec: number; label: string; source: AimSource }) => void
   onPatch: (patch: PatchSize) => void
 }
@@ -37,7 +39,7 @@ const STEPS = [
   },
 ]
 
-export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
+export function InputRail({ view, collapsed, onToggle, onCommit, onPatch }: InputRailProps) {
   const cityRef = useRef<MdTextField>(null)
   const raRef = useRef<MdTextField>(null)
   const decRef = useRef<MdTextField>(null)
@@ -203,7 +205,20 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
   return (
     <aside className="rail" aria-label="Choose a sky position">
       <header className="rail-head">
-        <h1>Ulysses</h1>
+        <div className="rail-title">
+          <h1>Ulysses</h1>
+          <button
+            type="button"
+            className="rail-toggle"
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Show the side pane' : 'Hide the side pane'}
+            onClick={onToggle}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z" fill="currentColor" />
+            </svg>
+          </button>
+        </div>
         <p className="step-count" key={step}>
           Step {step + 1} of {STEP_COUNT}
         </p>
