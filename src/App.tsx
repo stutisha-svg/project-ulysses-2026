@@ -3,7 +3,16 @@ import { InputRail } from './controls/InputRail'
 import { TelemetryCard } from './controls/TelemetryCard'
 import { GuideMap } from './sky/GuideMap'
 import { LoadSequence } from './sky/LoadSequence'
-import { readView, writeView, type AimSource, type PatchSize, type SkyLayer, type ViewState } from './state/viewState'
+import {
+  readView,
+  writeView,
+  type AimSource,
+  type AnalysisMode,
+  type BandGroup,
+  type PatchSize,
+  type SkyLayer,
+  type ViewState,
+} from './state/viewState'
 
 export function App() {
   const [view, setView] = useState<ViewState>(() => readView())
@@ -40,6 +49,22 @@ export function App() {
     })
   }
 
+  function setMode(mode: AnalysisMode) {
+    setView((current) => {
+      const next = { ...current, mode }
+      if (next.committed) writeView(next)
+      return next
+    })
+  }
+
+  function setBand(band: BandGroup) {
+    setView((current) => {
+      const next = { ...current, band }
+      if (next.committed) writeView(next)
+      return next
+    })
+  }
+
   function setPatch(patch: PatchSize) {
     setView((current) => {
       const next = { ...current, patch }
@@ -57,7 +82,7 @@ export function App() {
         <InputRail view={view} onCommit={commit} onPatch={setPatch} />
         <main className="stage">
           <GuideMap view={view} onCommit={commit} onAim={aimFromMap} />
-          <LoadSequence view={view} onLayer={setLayer} onEpochSpan={setEpochSpan} />
+          <LoadSequence view={view} onLayer={setLayer} onEpochSpan={setEpochSpan} onMode={setMode} onBand={setBand} />
           <div className="reticle" aria-hidden="true" />
           <TelemetryCard view={view} epochSpan={epochSpan} />
         </main>

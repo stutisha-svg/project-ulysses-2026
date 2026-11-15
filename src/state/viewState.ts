@@ -4,6 +4,10 @@ export type AimSource = 'city' | 'geolocation' | 'coordinates' | 'starter' | 'dr
 
 export type SkyLayer = 'sky' | 'pixels'
 
+export type AnalysisMode = 'blink' | 'subtract' | 'bands' | 'signal'
+
+export type BandGroup = 'hot' | 'cold'
+
 export type ViewState = {
   ra: number | null
   dec: number | null
@@ -15,6 +19,9 @@ export type ViewState = {
   layer: SkyLayer
   // False until the user or a loaded frame writes `layer` into the query.
   layerChosen: boolean
+  mode: AnalysisMode
+  // Blink stays inside this group. Hot is D1–D2. Cold is D4–D6.
+  band: BandGroup
 }
 
 // Degrees on the sky for the three patch stops. The fetcher reads these when cutouts start.
@@ -39,9 +46,11 @@ const EMPTY: ViewState = {
   source: null,
   layer: 'sky',
   layerChosen: false,
+  mode: 'blink',
+  band: 'hot',
 }
 
-// Analysis keys (mode, band, subtract, sky or pixels) join this query when those controls exist.
+// Mode, band, and subtract join this query with Sky / Pixels once a view is committed.
 export function readView(search = window.location.search): ViewState {
   const params = new URLSearchParams(search)
   const ra = readDegree(params.get('ra'), 0, 360)
@@ -60,6 +69,8 @@ export function readView(search = window.location.search): ViewState {
     source: 'coordinates',
     layer: layer ?? 'sky',
     layerChosen: layer != null,
+    mode: readMode(params.get('mode')),
+    band: readBand(params.get('band')),
   }
 }
 
@@ -72,6 +83,11 @@ export function writeView(state: ViewState): void {
     // Sky / Pixels is part of the saved view once a frame or the user has chosen it.
     if (state.layerChosen) params.set('layer', state.layer)
     else params.delete('layer')
+    params.set('mode', state.mode)
+    params.set('band', state.band)
+    // Subtract is the mode, written so a reopened link comes back on the difference.
+    if (state.mode === 'subtract') params.set('subtract', '1')
+    else params.delete('subtract')
   }
   const next = params.toString()
   const url = `${window.location.pathname}${next ? `?${next}` : ''}`
@@ -88,6 +104,16 @@ function readDegree(value: string | null, min: number, max: number): number | nu
 function readLayer(value: string | null): SkyLayer | null {
   if (value === 'sky' || value === 'pixels') return value
   return null
+}
+
+function readMode(value: string | null): AnalysisMode {
+  if (value === 'blink' || value === 'subtract' || value === 'bands' || value === 'signal') return value
+  return 'blink'
+}
+
+function readBand(value: string | null): BandGroup {
+  if (value === 'hot' || value === 'cold') return value
+  return 'hot'
 }
 
 function readPatch(value: string | null): PatchSize {

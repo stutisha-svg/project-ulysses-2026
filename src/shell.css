@@ -253,11 +253,24 @@ md-text-button {
   color: var(--md-sys-color-on-surface);
 }
 
-.stage-caption {
+.stage-readout {
   position: absolute;
   top: 16px;
   left: 16px;
-  z-index: 2;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: min(640px, calc(100% - 220px));
+  pointer-events: none;
+}
+
+.stage-readout > * {
+  pointer-events: auto;
+}
+
+.stage-caption {
   max-width: 42ch;
   margin: 0;
   padding: 8px 12px;
@@ -268,13 +281,17 @@ md-text-button {
   line-height: 1.35;
 }
 
-.first-look {
+.stage > .stage-caption {
   position: absolute;
   top: 16px;
   left: 16px;
-  z-index: 3;
+  z-index: 2;
+}
+
+.first-look {
+  position: static;
   box-sizing: border-box;
-  width: min(42ch, calc(100% - 32px));
+  width: min(42ch, 100%);
   margin: 0;
   padding: 12px;
   border: 1px solid var(--md-sys-color-outline);
@@ -407,16 +424,81 @@ md-text-button {
   pointer-events: auto;
 }
 
-.pixel-stage,
-.pixel-stage img {
+.pixel-stage {
+  position: relative;
   width: 100%;
   height: 100%;
 }
 
+.pixel-stage img,
+.pixel-stage canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transition: opacity var(--motion-duration) var(--motion-easing);
+}
+
 .pixel-stage img {
   display: block;
-  object-fit: contain;
   background: var(--md-sys-color-surface);
+}
+
+.pixel-stage img.is-dim {
+  opacity: 0;
+}
+
+.pixel-stage canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pixel-stage canvas.is-on {
+  opacity: 1;
+}
+
+.analysis-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--md-sys-color-surface-container) 92%, transparent);
+}
+
+.analysis-copy {
+  margin: 0;
+  max-width: 54ch;
+  color: var(--md-sys-color-on-surface);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.analysis-bands {
+  width: 180px;
+}
+
+.analysis-signal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  color: var(--md-sys-color-on-surface);
+  font-size: 13px;
+}
+
+.analysis-signal label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analysis-signal input[type='range'] {
+  width: 140px;
+  accent-color: var(--md-sys-color-primary);
 }
 
 .north-mark {

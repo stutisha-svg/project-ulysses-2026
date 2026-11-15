@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { PATCH_DEGREES, type SkyLayer, type ViewState } from '../state/viewState'
+import { AnalysisBar } from '../controls/AnalysisBar'
+import { PATCH_DEGREES, type BandGroup, type SkyLayer, type ViewState } from '../state/viewState'
 import { PixelStage, centerCounts, sourceFraction, type DetectorFrame, type FramePoint } from './PixelStage'
 
 type Visit = {
@@ -12,14 +13,13 @@ type LoadSequenceProps = {
   view: ViewState
   onLayer: (layer: SkyLayer) => void
   onEpochSpan: (span: string) => void
+  onMode: (mode: ViewState['mode']) => void
+  onBand: (band: BandGroup) => void
 }
 
 type Phase = 'idle' | 'finding' | 'opening' | 'ready' | 'empty' | 'error'
 
 const GUIDE_CAPTION = 'Visible-light stand-in. The infrared survey is offline. Not a SPHEREx exposure.'
-// First picture uses the hot group when that group has a visit.
-// Cold is only the fallback. Blink stays inside one group and does not cross this line.
-const FIRST_GROUP = 'hot'
 // First inspection only. A later visit of the same browser skips the lesson.
 const FIRST_LOOK_KEY = 'ulysses-first-look'
 const FIRST_LOOK = [
@@ -37,7 +37,7 @@ const FIRST_LOOK = [
   },
 ]
 
-export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) {
+export function LoadSequence({ view, onLayer, onEpochSpan, onMode, onBand }: LoadSequenceProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [visits, setVisits] = useState<Visit[]>([])
   const [shown, setShown] = useState(0)
@@ -45,6 +45,9 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
   const [frameIndex, setFrameIndex] = useState(0)
   const [lessonStep, setLessonStep] = useState(0)
   const [lessonOn, setLessonOn] = useState(() => localStorage.getItem(FIRST_LOOK_KEY) !== 'seen')
+  const [contrast, setContrast] = useState(2)
+  const [mask, setMask] = useState(false)
+  const [maskNote, setMaskNote] = useState('')
   const layerRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLOListElement>(null)
   const onLayerRef = useRef(onLayer)
@@ -82,17 +85,24 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
       const visitBody = (await visitResponse.json()) as { groups: Record<string, Visit[]> }
       const hot = visitBody.groups.hot ?? []
       const cold = visitBody.groups.cold ?? []
-      const group = hot.length > 0 ? FIRST_GROUP : cold.length > 0 ? 'cold' : null
-      const rows = group === 'cold' ? cold : hot
-      if (!group) {
+      if (hot.length === 0 && cold.length === 0) {
         setPhase('empty')
         onEpochRef.current('SPHEREx has not visited this spot.')
+        return
+      }
+      // Blink only this band group. Do not step across wavelengths.
+      const rows = view.band === 'cold' ? cold : hot
+      if (rows.length === 0) {
+        setVisits([])
+        setFrames([])
+        setPhase('ready')
+        onEpochRef.current('This group has no visit here.')
         return
       }
       setVisits(rows)
       onEpochRef.current(epochSpan(rows))
       setPhase('opening')
-      const frameResponse = await fetch(`/api/frames?${aim}&group=${group}`, { signal: controller.signal })
+      const frameResponse = await fetch(`/api/frames?${aim}&group=${view.band}`, { signal: controller.signal })
       if (!frameResponse.ok) throw new Error('frames')
       const frameBody = (await frameResponse.json()) as { frames: DetectorFrame[] }
       if (frameBody.frames.length === 0) throw new Error('frames')
@@ -112,7 +122,25 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
     })
 
     return () => controller.abort()
-  }, [view.committed, view.ra, view.dec, view.patch])
+  }, [view.committed, view.ra, view.dec, view.patch, view.band])
+
+  useEffect(() => {
+    if (view.mode !== 'blink' || frames.length < 2) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setInterval(() => {
+      setFrameIndex((index) => (index + 1) % frames.length)
+    }, 900)
+    return () => window.clearInterval(timer)
+  }, [view.mode, frames])
+
+  useEffect(() => {
+    if (view.mode !== 'blink') return
+    const timeline = timelineRef.current
+    if (!timeline || frames.length < 2) return
+    const span = timeline.scrollWidth - timeline.clientWidth
+    if (span <= 0) return
+    timeline.scrollLeft = (frameIndex / (frames.length - 1)) * span
+  }, [view.mode, frameIndex, frames.length])
 
   useEffect(() => {
     if (visits.length === 0) return
@@ -162,7 +190,8 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
   }
 
   const frame = frames[frameIndex] ?? null
-  const counts = frame ? centerCounts(frame) : null
+  const baseline = view.mode === 'subtract' ? (frames[0] ?? null) : null
+  const counts = frame ? centerCounts(frame, baseline) : null
   const showPixels = view.layer === 'pixels' && frame != null
   const showLesson = lessonOn && showPixels
   const lesson = FIRST_LOOK[lessonStep]
@@ -187,9 +216,22 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
 
   return (
     <>
-      <p className="stage-caption" hidden={showLesson}>
-        {caption(phase, view.layer, frame, visits.length > 0)}
-      </p>
+      <div className="stage-readout">
+        <AnalysisBar
+          mode={view.mode}
+          band={view.band}
+          frameCount={frames.length}
+          contrast={contrast}
+          mask={mask}
+          maskNote={maskNote}
+          onMode={onMode}
+          onBand={onBand}
+          onContrast={setContrast}
+          onMask={setMask}
+        />
+        <p className="stage-caption" hidden={showLesson}>
+          {caption(phase, view.layer, frame, visits.length > 0)}
+        </p>
       {showLesson ? (
         <section className="first-look" aria-labelledby="first-look-title">
           <p className="first-look-step">
@@ -212,6 +254,7 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
           </button>
         </section>
       ) : null}
+      </div>
       <div ref={layerRef} className="layer-toggle">
         <md-outlined-segmented-button-set aria-label="Sky or pixels">
           <md-outlined-segmented-button label="Sky" data-layer="sky" />
@@ -219,7 +262,16 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
         </md-outlined-segmented-button-set>
       </div>
       <div className={showPixels ? 'pixel-layer is-on' : 'pixel-layer'}>
-        {frame ? <PixelStage frame={frame} path={path} /> : null}
+        {frame ? (
+          <PixelStage
+            frame={frame}
+            baseline={baseline}
+            contrast={view.mode === 'signal' ? contrast : 1}
+            mask={view.mode === 'signal' && mask}
+            onMaskNote={setMaskNote}
+            path={path}
+          />
+        ) : null}
       </div>
       {showPixels && counts != null && frame ? (
         <p className="reticle-readout">
