@@ -20,6 +20,22 @@ const GUIDE_CAPTION = 'Visible-light stand-in. The infrared survey is offline. N
 // First picture uses the hot group when that group has a visit.
 // Cold is only the fallback. Blink stays inside one group and does not cross this line.
 const FIRST_GROUP = 'hot'
+// First inspection only. A later visit of the same browser skips the lesson.
+const FIRST_LOOK_KEY = 'ulysses-first-look'
+const FIRST_LOOK = [
+  {
+    title: 'These speckles are not stars',
+    body: 'This is one SPHEREx wavelength, stretched from a handful of detector pixels. The grain across the frame is noise.',
+  },
+  {
+    title: 'Look for one brighter knot',
+    body: 'A real source is the patch that stays brighter than the grain and keeps its shape. Ignore the speckles around it.',
+  },
+  {
+    title: 'Move through the visits',
+    body: 'The dates at the lower right change the picture. If the knot shifts, a line appears after the third visit. That line is the motion.',
+  },
+]
 
 export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) {
   const [phase, setPhase] = useState<Phase>('idle')
@@ -27,6 +43,8 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
   const [shown, setShown] = useState(0)
   const [frames, setFrames] = useState<DetectorFrame[]>([])
   const [frameIndex, setFrameIndex] = useState(0)
+  const [lessonStep, setLessonStep] = useState(0)
+  const [lessonOn, setLessonOn] = useState(() => localStorage.getItem(FIRST_LOOK_KEY) !== 'seen')
   const layerRef = useRef<HTMLDivElement>(null)
   const timelineRef = useRef<HTMLOListElement>(null)
   const onLayerRef = useRef(onLayer)
@@ -146,6 +164,8 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
   const frame = frames[frameIndex] ?? null
   const counts = frame ? centerCounts(frame) : null
   const showPixels = view.layer === 'pixels' && frame != null
+  const showLesson = lessonOn && showPixels
+  const lesson = FIRST_LOOK[lessonStep]
   // One fraction per frame, so a 12-pixel cutout and a wide patch share the line.
   const sources = frames.map((item) => sourceFraction(item))
   // The line appears once the third frame is in view. Positions are fractions of each
@@ -167,7 +187,31 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
 
   return (
     <>
-      <p className="stage-caption">{caption(phase, view.layer, frame, visits.length > 0)}</p>
+      <p className="stage-caption" hidden={showLesson}>
+        {caption(phase, view.layer, frame, visits.length > 0)}
+      </p>
+      {showLesson ? (
+        <section className="first-look" aria-labelledby="first-look-title">
+          <p className="first-look-step">
+            {lessonStep + 1} of {FIRST_LOOK.length}
+          </p>
+          <h2 id="first-look-title">{lesson.title}</h2>
+          <p>{lesson.body}</p>
+          <button
+            type="button"
+            onClick={() => {
+              if (lessonStep < FIRST_LOOK.length - 1) {
+                setLessonStep(lessonStep + 1)
+                return
+              }
+              localStorage.setItem(FIRST_LOOK_KEY, 'seen')
+              setLessonOn(false)
+            }}
+          >
+            {lessonStep < FIRST_LOOK.length - 1 ? 'Next' : 'Look at the slice'}
+          </button>
+        </section>
+      ) : null}
       <div ref={layerRef} className="layer-toggle">
         <md-outlined-segmented-button-set aria-label="Sky or pixels">
           <md-outlined-segmented-button label="Sky" data-layer="sky" />
@@ -226,7 +270,7 @@ function caption(phase: Phase, layer: SkyLayer, frame: DetectorFrame | null, has
   if (phase === 'error' && hasVisits) return 'The detector frames did not download.'
   if (phase === 'error') return 'The archive did not answer.'
   if (layer === 'pixels' && frame) {
-    return `${formatVisit(frame.observed)}. One SPHEREx wavelength slice. The grain is noise, not stars.`
+    return `${formatVisit(frame.observed)}. Speckles are noise. Follow the brighter knot as you move through the visits.`
   }
   return GUIDE_CAPTION
 }

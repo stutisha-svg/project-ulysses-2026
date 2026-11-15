@@ -234,6 +234,7 @@ export function GuideMap({ view, onCommit, onAim }: GuideMapProps) {
         <p className="starter-label" style={{ left: labelAt.x, top: labelAt.y }}>
           <strong>{highlighted.title}</strong>
           <span>{highlighted.catalog}</span>
+          <span className="starter-note">{highlighted.note}</span>
         </p>
       ) : null}
       {failed ? <p className="guide-status">{failed}</p> : null}

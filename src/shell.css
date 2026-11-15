@@ -218,7 +218,7 @@ md-text-button {
 .starter-label {
   position: absolute;
   z-index: 1;
-  max-width: 28ch;
+  max-width: 42ch;
   margin: 0;
   padding: 6px 10px;
   border-radius: 12px;
@@ -239,6 +239,11 @@ md-text-button {
   color: var(--md-sys-color-on-surface-variant);
 }
 
+.starter-label .starter-note {
+  margin-top: 4px;
+  color: var(--md-sys-color-on-surface);
+}
+
 .guide-status {
   position: absolute;
   top: 64px;
@@ -253,7 +258,7 @@ md-text-button {
   top: 16px;
   left: 16px;
   z-index: 2;
-  max-width: 36ch;
+  max-width: 42ch;
   margin: 0;
   padding: 8px 12px;
   border: 1px solid var(--md-sys-color-outline);
@@ -261,6 +266,51 @@ md-text-button {
   background: var(--md-sys-color-surface-container);
   font-size: 13px;
   line-height: 1.35;
+}
+
+.first-look {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 3;
+  box-sizing: border-box;
+  width: min(42ch, calc(100% - 32px));
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.first-look h2 {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.first-look p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.first-look-step {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 12px;
+}
+
+.first-look button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .reticle {
