@@ -93,6 +93,8 @@ export function GuideMap({ view, onCommit, onAim }: GuideMapProps) {
         })
         sky.on('positionChanged', (payload) => {
           if (programmatic.current) return
+          // The committed aim stays put. Panning under the pixel picture must not reload frames.
+          if (viewRef.current.committed) return
           if (payload.ra == null || payload.dec == null) return
           onAimRef.current({ ra: payload.ra, dec: payload.dec })
         })

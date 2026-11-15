@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import csv
 import io
+import json
 import math
 import time
 from pathlib import Path
@@ -103,6 +104,65 @@ def all_bandpasses() -> tuple[str, ...]:
     return tuple(band for bands in BAND_GROUPS.values() for band in bands)
 
 
+def lookup_path(ra: float, dec: float, size: float, bandpasses: tuple[str, ...]) -> Path:
+    bands = "-".join(name.removeprefix("SPHEREx-") for name in bandpasses)
+    # Size stays in the key because it selects the cutout, not the search radius.
+    return CACHE / f"lookup_{ra:.3f}_{dec:.3f}_{size:.4f}_{bands}.json".replace("-", "m")
+
+
+def read_lookup(ra: float, dec: float, size: float, bandpasses: tuple[str, ...]) -> list[dict] | None:
+    path = lookup_path(ra, dec, size, bandpasses)
+    if not path.exists():
+        return None
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return rows if isinstance(rows, list) and rows else None
+
+
+def write_lookup(ra: float, dec: float, size: float, bandpasses: tuple[str, ...], rows: list[dict]) -> None:
+    if not rows:
+        return
+    CACHE.mkdir(parents=True, exist_ok=True)
+    lookup_path(ra, dec, size, bandpasses).write_text(json.dumps(rows), encoding="utf-8")
+
+
+def rows_from_saved_cutouts(ra: float, dec: float, size: float, bandpasses: tuple[str, ...]) -> list[dict]:
+    fragment = "".join(
+        character if character.isalnum() else "_"
+        for character in f"center={ra:.6f},{dec:.6f}d&size={size:.4f}"
+    )
+    wanted = set(bandpasses)
+    found = []
+    if not CACHE.is_dir():
+        return []
+    for path in CACHE.glob("*.fits"):
+        if fragment not in path.name:
+            continue
+        try:
+            with fits.open(path) as hdul:
+                header = hdul["IMAGE"].header
+                detector = int(header["DETECTOR"])
+                mjd = float(header["MJD-OBS"])
+        except Exception:
+            continue
+        band = f"SPHEREx-D{detector}"
+        if band not in wanted or not math.isfinite(mjd):
+            continue
+        found.append(
+            {
+                "uri": "",
+                "path": str(path),
+                "observed": str(mjd),
+                "mjd": mjd,
+                "bandpass": band,
+            }
+        )
+    found.sort(key=lambda item: item["mjd"])
+    return found
+
+
 def query_archive(ra: float, dec: float, size: float, bandpasses: tuple[str, ...]) -> list[dict]:
     # Planned lookup is IRSA TAP. It is returning 502, so visits come from SIA.
     # Restore this SQL through TAP_URL when TAP is healthy. Band names stay in the query,
@@ -121,6 +181,10 @@ def query_archive(ra: float, dec: float, size: float, bandpasses: tuple[str, ...
     #
     # nasa-irsa-spherex holds these same FITS files. It has no position index, and its
     # HiPS folder is order-5 spectral cubes with no properties file, so it is not a lookup.
+    # Size stays in the key because it selects the cutout. A 502 reuses this file.
+    stored = read_lookup(ra, dec, size, bandpasses)
+    if stored:
+        return stored
     wanted = set(bandpasses)
     params = urlencode(
         {
@@ -141,7 +205,11 @@ def query_archive(ra: float, dec: float, size: float, bandpasses: tuple[str, ...
             break
         except Exception as error:
             last_error = error
-            # The IRSA proxy sometimes answers 502 for a moment. Try the same search once more.
+            # The IRSA proxy sometimes answers 502. Saved cutouts for this aim still open.
+            saved = rows_from_saved_cutouts(ra, dec, size, bandpasses)
+            if saved:
+                write_lookup(ra, dec, size, bandpasses, saved)
+                return saved
             if attempt == 0 and getattr(error, "code", None) in (502, 503):
                 time.sleep(2)
                 continue
@@ -164,6 +232,7 @@ def query_archive(ra: float, dec: float, size: float, bandpasses: tuple[str, ...
             }
         )
     found.sort(key=lambda item: (item["mjd"] is None, item["mjd"] or 0))
+    write_lookup(ra, dec, size, bandpasses, found)
     return found
 
 
@@ -204,7 +273,7 @@ def public_visit(visit: dict) -> dict:
 
 
 def load_frame(row: dict) -> dict:
-    path = cached_fits(row)
+    path = Path(row["path"]) if row.get("path") else cached_fits(row)
     with fits.open(path) as hdul:
         image = np.array(hdul["IMAGE"].data, dtype=np.float32)
         variance = array_or_none(hdul, "VARIANCE")

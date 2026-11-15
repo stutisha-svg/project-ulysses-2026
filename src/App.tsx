@@ -28,15 +28,15 @@ export function App() {
 
   function aimFromMap(aim: { ra: number; dec: number }) {
     setView((current) => {
-      const next = {
+      // A commit locks the aim in the query. A later map pan must not start another visit lookup.
+      if (current.committed) return current
+      return {
         ...current,
         ra: aim.ra,
         dec: aim.dec,
         label: 'Map center',
         source: 'drag' as const,
       }
-      if (next.committed) writeView(next)
-      return next
     })
   }
 

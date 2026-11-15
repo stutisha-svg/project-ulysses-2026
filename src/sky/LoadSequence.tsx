@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PATCH_DEGREES, type SkyLayer, type ViewState } from '../state/viewState'
-import { PixelStage, centerCounts, type DetectorFrame } from './PixelStage'
+import { PixelStage, centerCounts, sourceFraction, type DetectorFrame, type FramePoint } from './PixelStage'
 
 type Visit = {
   observed: string
@@ -25,8 +25,10 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
   const [phase, setPhase] = useState<Phase>('idle')
   const [visits, setVisits] = useState<Visit[]>([])
   const [shown, setShown] = useState(0)
-  const [frame, setFrame] = useState<DetectorFrame | null>(null)
+  const [frames, setFrames] = useState<DetectorFrame[]>([])
+  const [frameIndex, setFrameIndex] = useState(0)
   const layerRef = useRef<HTMLDivElement>(null)
+  const timelineRef = useRef<HTMLOListElement>(null)
   const onLayerRef = useRef(onLayer)
   const onEpochRef = useRef(onEpochSpan)
   const layerChosenRef = useRef(view.layerChosen)
@@ -39,7 +41,8 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
       setPhase('idle')
       setVisits([])
       setShown(0)
-      setFrame(null)
+      setFrames([])
+      setFrameIndex(0)
       onEpochRef.current('')
       return
     }
@@ -51,7 +54,8 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
     setPhase('finding')
     setVisits([])
     setShown(0)
-    setFrame(null)
+    setFrames([])
+    setFrameIndex(0)
     onEpochRef.current('Finding visits…')
 
     const run = async () => {
@@ -73,10 +77,10 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
       const frameResponse = await fetch(`/api/frames?${aim}&group=${group}`, { signal: controller.signal })
       if (!frameResponse.ok) throw new Error('frames')
       const frameBody = (await frameResponse.json()) as { frames: DetectorFrame[] }
-      const first = frameBody.frames[0]
-      if (!first) throw new Error('frames')
+      if (frameBody.frames.length === 0) throw new Error('frames')
       if (controller.signal.aborted) return
-      setFrame(first)
+      setFrames(frameBody.frames)
+      setFrameIndex(0)
       setPhase('ready')
       if (!layerChosenRef.current) onLayerRef.current('pixels')
     }
@@ -107,6 +111,19 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
   }, [visits])
 
   useEffect(() => {
+    const timeline = timelineRef.current
+    if (!timeline) return
+    // A vertical wheel moves this horizontal strip. The scroll handler then picks the frame.
+    const onWheel = (event: WheelEvent) => {
+      if (timeline.scrollWidth <= timeline.clientWidth) return
+      timeline.scrollLeft += Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+      event.preventDefault()
+    }
+    timeline.addEventListener('wheel', onWheel, { passive: false })
+    return () => timeline.removeEventListener('wheel', onWheel)
+  }, [frames.length, phase, view.committed])
+
+  useEffect(() => {
     const root = layerRef.current
     if (!root) return
     const buttons = root.querySelectorAll('md-outlined-segmented-button')
@@ -126,8 +143,27 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
     return <p className="stage-caption">{GUIDE_CAPTION}</p>
   }
 
+  const frame = frames[frameIndex] ?? null
   const counts = frame ? centerCounts(frame) : null
   const showPixels = view.layer === 'pixels' && frame != null
+  // One fraction per frame, so a 12-pixel cutout and a wide patch share the line.
+  const sources = frames.map((item) => sourceFraction(item))
+  // The line appears once the third frame is in view. Positions are fractions of each
+  // cutout, so a tight patch and a wide patch use the same scrub.
+  const path: FramePoint[] =
+    frameIndex >= 2
+      ? sources.slice(0, frameIndex + 1).filter((point): point is FramePoint => point != null)
+      : []
+  const dates = frames.length > 0 ? frames : visits.slice(0, shown)
+
+  function onTimelineScroll() {
+    const timeline = timelineRef.current
+    if (!timeline || frames.length < 2) return
+    const span = timeline.scrollWidth - timeline.clientWidth
+    if (span <= 0) return
+    const index = Math.round((timeline.scrollLeft / span) * (frames.length - 1))
+    setFrameIndex((current) => (current === index ? current : index))
+  }
 
   return (
     <>
@@ -139,7 +175,7 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
         </md-outlined-segmented-button-set>
       </div>
       <div className={showPixels ? 'pixel-layer is-on' : 'pixel-layer'}>
-        {frame ? <PixelStage frame={frame} /> : null}
+        {frame ? <PixelStage frame={frame} path={path} /> : null}
       </div>
       {showPixels && counts != null && frame ? (
         <p className="reticle-readout">
@@ -149,9 +185,29 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
       {phase === 'empty' ? (
         <p className="visit-empty">SPHEREx has not visited this spot.</p>
       ) : (
-        <ol className="visit-timeline" aria-label="SPHEREx visits">
-          {visits.slice(0, shown).map((visit) => (
-            <li key={`${visit.observed}-${visit.bandpass}`}>{formatVisit(visit.observed)}</li>
+        <ol
+          ref={timelineRef}
+          className="visit-timeline"
+          aria-label="SPHEREx visits"
+          onScroll={onTimelineScroll}
+        >
+          {dates.map((visit, index) => (
+            <li
+              key={`${visit.observed}-${index}`}
+              className={frames.length > 0 && index === frameIndex ? 'is-current' : undefined}
+              onClick={() => {
+                if (frames.length < 2) return
+                const span = timelineRef.current
+                  ? timelineRef.current.scrollWidth - timelineRef.current.clientWidth
+                  : 0
+                if (timelineRef.current && span > 0) {
+                  timelineRef.current.scrollLeft = (index / (frames.length - 1)) * span
+                }
+                setFrameIndex(index)
+              }}
+            >
+              {formatVisit(visit.observed)}
+            </li>
           ))}
         </ol>
       )}
@@ -165,7 +221,9 @@ function caption(phase: Phase, layer: SkyLayer, frame: DetectorFrame | null, has
   if (phase === 'empty') return 'SPHEREx has not visited this spot. The starters are still one tap away.'
   if (phase === 'error' && hasVisits) return 'The detector frames did not download.'
   if (phase === 'error') return 'The archive did not answer.'
-  if (layer === 'pixels' && frame) return 'This is one SPHEREx wavelength slice. The grain is noise, not stars.'
+  if (layer === 'pixels' && frame) {
+    return `${formatVisit(frame.observed)}. One SPHEREx wavelength slice. The grain is noise, not stars.`
+  }
   return GUIDE_CAPTION
 }
 
