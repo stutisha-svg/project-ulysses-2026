@@ -1,6 +1,6 @@
 export type PatchSize = 'tight' | 'medium' | 'wide'
 
-export type AimSource = 'city' | 'geolocation' | 'coordinates'
+export type AimSource = 'city' | 'geolocation' | 'coordinates' | 'starter' | 'drag'
 
 export type ViewState = {
   ra: number | null

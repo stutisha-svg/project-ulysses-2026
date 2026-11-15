@@ -24,7 +24,7 @@ Locked decisions for the Ulysses SPHEREx app. PLAN.md is the product spec. This 
 | Input rail | `src/controls/InputRail.tsx` |
 | Telemetry card | `src/controls/TelemetryCard.tsx` |
 | City list and zenith | `src/data/cities.ts`, `src/lib/zenith.ts` |
-| Guide map (unWISE HiPS) | `src/sky/GuideMap.tsx`, `src/aladin.d.ts` |
+| Guide map (DSS stand-in; unWISE URL commented) | `src/sky/GuideMap.tsx`, `src/aladin.d.ts` |
 | Starter copy and tracks | `src/data/starters.ts` |
 | Visit timeline and Sky / Pixels | `src/sky/LoadSequence.tsx` |
 | Detector frames, blink, subtract, bands, stretch | `src/sky/PixelStage.tsx` |
@@ -36,7 +36,7 @@ Locked decisions for the Ulysses SPHEREx app. PLAN.md is the product spec. This 
 
 ## Science rules
 
-- The HiPS layer is an infrared guide map (chromeless Aladin Lite, unWISE color). It is not the SPHEREx exposure. Say so on screen.
+- The planned HiPS layer is unWISE color, an infrared guide, not the SPHEREx exposure. While CDS is down the screen uses ESA DSS color and says it is a visible-light stand-in.
 - Pixels are live SPHEREx cutouts only. Do not paint stars, dipoles, or glitches.
 - Hot stars: detectors D1–D2, about 0.75–1.6 μm. Cold icy objects: D4–D6, about 2.4–5.0 μm.
 - Time Blink cycles frames inside the selected band group, in time order.

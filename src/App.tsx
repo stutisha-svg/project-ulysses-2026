@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { InputRail } from './controls/InputRail'
 import { TelemetryCard } from './controls/TelemetryCard'
+import { GuideMap } from './sky/GuideMap'
 import { readView, writeView, type AimSource, type PatchSize, type ViewState } from './state/viewState'
 
 export function App() {
@@ -10,6 +11,20 @@ export function App() {
     setView((current) => {
       const next = { ...current, ...aim, committed: true }
       writeView(next)
+      return next
+    })
+  }
+
+  function aimFromMap(aim: { ra: number; dec: number }) {
+    setView((current) => {
+      const next = {
+        ...current,
+        ra: aim.ra,
+        dec: aim.dec,
+        label: 'Map center',
+        source: 'drag' as const,
+      }
+      if (next.committed) writeView(next)
       return next
     })
   }
@@ -30,8 +45,9 @@ export function App() {
       <div className="shell">
         <InputRail view={view} onCommit={commit} onPatch={setPatch} />
         <main className="stage">
+          <GuideMap view={view} onCommit={commit} onAim={aimFromMap} />
           {/* Guide-map state only. LoadSequence replaces this when visits load or Sky/Pixels changes. */}
-          <p className="stage-caption">Infrared guide map, not the SPHEREx exposure.</p>
+          <p className="stage-caption">Visible-light stand-in. The infrared survey is offline. Not a SPHEREx exposure.</p>
           <div className="reticle" aria-hidden="true" />
           <TelemetryCard view={view} />
         </main>

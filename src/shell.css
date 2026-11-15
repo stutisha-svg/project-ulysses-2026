@@ -198,6 +198,53 @@ md-text-button {
   background: var(--md-sys-color-surface);
 }
 
+.guide {
+  position: absolute;
+  inset: 0;
+}
+
+.guide-host,
+.guide-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.guide-canvas {
+  pointer-events: none;
+}
+
+.starter-label {
+  position: absolute;
+  z-index: 1;
+  max-width: 28ch;
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+  transition: opacity var(--motion-duration) var(--motion-easing);
+}
+
+.starter-label strong,
+.starter-label span {
+  display: block;
+}
+
+.starter-label span {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.guide-status {
+  position: absolute;
+  top: 64px;
+  left: 16px;
+  z-index: 1;
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
 .stage-caption {
   position: absolute;
   top: 16px;
