@@ -32,7 +32,7 @@ Locked decisions for the Ulysses SPHEREx app. PLAN.md is the product spec. This 
 | Marker and Pattern IDs | `src/lib/patterns.ts` |
 | Query-string state | `src/state/viewState.ts` |
 | Community gallery | `src/community/Feed.tsx` |
-| TAP, cutouts, cache, band groups | `server/spherex.py` |
+| TAP, cutouts, cache, band groups | `server/spherex.py`, `server/requirements.txt` |
 
 ## Science rules
 
