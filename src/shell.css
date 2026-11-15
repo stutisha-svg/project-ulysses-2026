@@ -639,7 +639,7 @@ md-outlined-segmented-button {
 .visit-empty {
   position: absolute;
   right: 16px;
-  bottom: 16px;
+  bottom: 80px;
   z-index: 2;
   max-width: min(220px, 40%);
   margin: 0;
@@ -702,6 +702,240 @@ md-outlined-segmented-button {
 .source-path .path-line {
   stroke: #c45cff;
   stroke-width: 2.5;
+}
+
+.pixel-stage.is-marking {
+  cursor: crosshair;
+}
+
+.pattern-path line {
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.pattern-path circle {
+  stroke: #1a1024;
+  stroke-width: 2;
+}
+
+.mark-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.mark-toggle {
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.mark-toggle.is-on {
+  background: #f4f4f6;
+  color: #0e0e10;
+  border-color: #f4f4f6;
+}
+
+.mark-toggle:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mark-hint,
+.overlay-toggle {
+  margin: 6px 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.overlay-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.pattern-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.pattern-legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 50%;
+}
+
+.pattern-metrics {
+  flex-basis: 100%;
+}
+
+.snapshot-fab {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 28px;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.gallery-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  background: color-mix(in srgb, #000 45%, transparent);
+}
+
+.gallery-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 100%);
+  overflow: auto;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--md-sys-color-surface-container);
+  border-radius: 28px 0 0 28px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.gallery-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gallery-head h2,
+.gallery-card h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.gallery-head button,
+.gallery-card form button,
+.gallery-open {
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.gallery-demo {
+  margin: 8px 0 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.gallery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gallery-card {
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.gallery-card img,
+.gallery-fallback {
+  display: block;
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface);
+}
+
+.gallery-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+}
+
+.gallery-tag,
+.gallery-meta,
+.gallery-catalog,
+.gallery-card details p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.gallery-tag,
+.gallery-catalog,
+.gallery-card details p {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.gallery-card details {
+  margin-top: 8px;
+}
+
+.gallery-comments {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.gallery-comments li + li {
+  margin-top: 4px;
+}
+
+.gallery-card form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.gallery-card input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+.gallery-open {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-color: transparent;
 }
 
 .rotate {

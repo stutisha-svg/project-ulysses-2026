@@ -17,6 +17,7 @@ type InputRailProps = {
   onToggle: () => void
   onCommit: (aim: { ra: number; dec: number; label: string; source: AimSource }) => void
   onPatch: (patch: PatchSize) => void
+  onCommunity: () => void
 }
 
 type Aim = { ra: number; dec: number; label: string; source: AimSource }
@@ -39,7 +40,7 @@ const STEPS = [
   },
 ]
 
-export function InputRail({ view, collapsed, onToggle, onCommit, onPatch }: InputRailProps) {
+export function InputRail({ view, collapsed, onToggle, onCommit, onPatch, onCommunity }: InputRailProps) {
   const cityRef = useRef<MdTextField>(null)
   const raRef = useRef<MdTextField>(null)
   const decRef = useRef<MdTextField>(null)
@@ -289,7 +290,7 @@ export function InputRail({ view, collapsed, onToggle, onCommit, onPatch }: Inpu
             </md-filled-button>
           )}
         </div>
-        <md-text-button type="button" onClick={() => setNotice('Community snapshots open in a later step.')}>
+        <md-text-button type="button" onClick={onCommunity}>
           Community
         </md-text-button>
       </footer>

@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, type MutableRefObject, type PointerEvent } from 'react'
+import { orderNodes, type PatternNode } from '../lib/patterns'
 
 export type DetectorFrame = {
   observed: string
@@ -25,11 +26,28 @@ type PixelStageProps = {
   onMaskNote: (note: string) => void
   // Fractions of that frame's width and height. The same 0–1 space fits every patch size.
   path: FramePoint[]
+  marks: PatternNode[]
+  marking: boolean
+  showOverlays: boolean
+  onMark: (point: { x: number; y: number; pixelX: number; pixelY: number }) => void
+  captureRef?: MutableRefObject<(() => string | null) | null>
 }
 
 type PlacedImage = { x: number; y: number; width: number; height: number }
 
-export function PixelStage({ frame, baseline, contrast, mask, onMaskNote, path }: PixelStageProps) {
+export function PixelStage({
+  frame,
+  baseline,
+  contrast,
+  mask,
+  onMaskNote,
+  path,
+  marks,
+  marking,
+  showOverlays,
+  onMark,
+  captureRef,
+}: PixelStageProps) {
   const stageRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -71,15 +89,46 @@ export function PixelStage({ frame, baseline, contrast, mask, onMaskNote, path }
     }
   }, [frame.width, frame.height, frame.previewPng])
 
+  useLayoutEffect(() => {
+    if (!captureRef) return
+    captureRef.current = () => captureFrame(imageRef.current, canvasRef.current, drawn, marks, showOverlays)
+    return () => {
+      captureRef.current = null
+    }
+  }, [captureRef, drawn, marks, showOverlays])
+
+  function onPointerUp(event: PointerEvent<HTMLDivElement>) {
+    if (!marking || !placed) return
+    const stage = stageRef.current
+    if (!stage) return
+    const box = stage.getBoundingClientRect()
+    const localX = event.clientX - box.left - placed.x
+    const localY = event.clientY - box.top - placed.y
+    if (localX < 0 || localY < 0 || localX > placed.width || localY > placed.height) return
+    const x = localX / placed.width
+    const y = localY / placed.height
+    onMark({
+      x,
+      y,
+      pixelX: Math.min(frame.width - 1, Math.max(0, Math.floor(x * frame.width))),
+      pixelY: Math.min(frame.height - 1, Math.max(0, Math.floor(y * frame.height))),
+    })
+  }
+
   const line =
-    placed && path.length > 1
+    placed && showOverlays && path.length > 1
       ? path
           .map((point) => `${point.x * placed.width},${point.y * placed.height}`)
           .join(' ')
       : ''
+  const ordered = showOverlays && placed ? orderNodes(marks) : []
 
   return (
-    <div className="pixel-stage" ref={stageRef}>
+    <div
+      className={marking ? 'pixel-stage is-marking' : 'pixel-stage'}
+      ref={stageRef}
+      onPointerUp={onPointerUp}
+    >
       <img
         ref={imageRef}
         className={drawn ? 'is-dim' : undefined}
@@ -96,6 +145,37 @@ export function PixelStage({ frame, baseline, contrast, mask, onMaskNote, path }
         >
           <polyline className="path-halo" points={line} />
           <polyline className="path-line" points={line} />
+        </svg>
+      ) : null}
+      {placed && ordered.length > 0 ? (
+        <svg
+          className="source-path pattern-path"
+          style={{ left: placed.x, top: placed.y, width: placed.width, height: placed.height }}
+          viewBox={`0 0 ${placed.width} ${placed.height}`}
+          aria-hidden="true"
+        >
+          {ordered.slice(1).map((node, index) => {
+            const previous = ordered[index]
+            return (
+              <line
+                key={`${node.observed}-${node.x}-${index}`}
+                x1={previous.x * placed.width}
+                y1={previous.y * placed.height}
+                x2={node.x * placed.width}
+                y2={node.y * placed.height}
+                stroke={node.color}
+              />
+            )
+          })}
+          {ordered.map((node, index) => (
+            <circle
+              key={`${node.name}-${index}`}
+              cx={node.x * placed.width}
+              cy={node.y * placed.height}
+              r="7"
+              fill={node.color}
+            />
+          ))}
         </svg>
       ) : null}
       {/* The cutout stays in spacecraft orientation. This mark is only a direction. */}
@@ -116,6 +196,24 @@ export function centerCounts(frame: DetectorFrame, baseline?: DetectorFrame | nu
   const row = Math.floor(frame.height / 2)
   const column = Math.floor(frame.width / 2)
   const index = row * frame.width + column
+  let value = values[index]
+  if (baseline) {
+    const earlier = floatValues(baseline.image)
+    if (earlier) value -= earlier[index] ?? 0
+  }
+  return Number.isFinite(value) ? value : null
+}
+
+export function countsAt(
+  frame: DetectorFrame,
+  pixelX: number,
+  pixelY: number,
+  baseline?: DetectorFrame | null,
+): number | null {
+  const values = floatValues(frame.image)
+  if (!values) return null
+  if (pixelX < 0 || pixelY < 0 || pixelX >= frame.width || pixelY >= frame.height) return null
+  const index = pixelY * frame.width + pixelX
   let value = values[index]
   if (baseline) {
     const earlier = floatValues(baseline.image)
@@ -241,4 +339,45 @@ function percentile(samples: number[], fraction: number): number {
   const ordered = [...samples].sort((a, b) => a - b)
   const index = Math.max(0, Math.min(ordered.length - 1, Math.round(fraction * (ordered.length - 1))))
   return ordered[index]
+}
+
+function captureFrame(
+  image: HTMLImageElement | null,
+  painted: HTMLCanvasElement | null,
+  drawn: boolean,
+  marks: PatternNode[],
+  showOverlays: boolean,
+): string | null {
+  if (!image || !image.complete || image.naturalWidth === 0) return null
+  const canvas = document.createElement('canvas')
+  const size = 480
+  canvas.width = size
+  canvas.height = size
+  const context = canvas.getContext('2d')
+  if (!context) return null
+  context.fillStyle = '#0e0e10'
+  context.fillRect(0, 0, size, size)
+  context.imageSmoothingEnabled = false
+  const source = drawn && painted && painted.width > 0 ? painted : image
+  context.drawImage(source, 0, 0, size, size)
+  if (!showOverlays) return canvas.toDataURL('image/png')
+  const ordered = orderNodes(marks)
+  context.lineWidth = 4
+  context.lineCap = 'round'
+  for (let index = 1; index < ordered.length; index += 1) {
+    const previous = ordered[index - 1]
+    const node = ordered[index]
+    context.strokeStyle = node.color
+    context.beginPath()
+    context.moveTo(previous.x * size, previous.y * size)
+    context.lineTo(node.x * size, node.y * size)
+    context.stroke()
+  }
+  for (const node of ordered) {
+    context.beginPath()
+    context.fillStyle = node.color
+    context.arc(node.x * size, node.y * size, 10, 0, Math.PI * 2)
+    context.fill()
+  }
+  return canvas.toDataURL('image/png')
 }

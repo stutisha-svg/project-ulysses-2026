@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { AnalysisBar } from '../controls/AnalysisBar'
+import { describePattern, orderNodes } from '../lib/patterns'
 import { PATCH_DEGREES, type BandGroup, type SkyLayer, type ViewState } from '../state/viewState'
-import { PixelStage, centerCounts, sourceFraction, type DetectorFrame, type FramePoint } from './PixelStage'
+import { PixelStage, centerCounts, countsAt, sourceFraction, type DetectorFrame, type FramePoint } from './PixelStage'
 
 type Visit = {
   observed: string
@@ -11,10 +12,14 @@ type Visit = {
 
 type LoadSequenceProps = {
   view: ViewState
+  marking: boolean
+  captureRef: MutableRefObject<(() => string | null) | null>
   onLayer: (layer: SkyLayer) => void
   onEpochSpan: (span: string) => void
   onMode: (mode: ViewState['mode']) => void
   onBand: (band: BandGroup) => void
+  onMetrics: (note: string) => void
+  onMark: (point: { observed: string; x: number; y: number; pixelX: number; pixelY: number }) => void
 }
 
 type Phase = 'idle' | 'finding' | 'opening' | 'ready' | 'empty' | 'error'
@@ -37,7 +42,17 @@ const FIRST_LOOK = [
   },
 ]
 
-export function LoadSequence({ view, onLayer, onEpochSpan, onMode, onBand }: LoadSequenceProps) {
+export function LoadSequence({
+  view,
+  marking,
+  captureRef,
+  onLayer,
+  onEpochSpan,
+  onMode,
+  onBand,
+  onMetrics,
+  onMark,
+}: LoadSequenceProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [visits, setVisits] = useState<Visit[]>([])
   const [shown, setShown] = useState(0)
@@ -125,13 +140,24 @@ export function LoadSequence({ view, onLayer, onEpochSpan, onMode, onBand }: Loa
   }, [view.committed, view.ra, view.dec, view.patch, view.band])
 
   useEffect(() => {
-    if (view.mode !== 'blink' || frames.length < 2) return
+    if (view.mode !== 'blink' || frames.length < 2 || marking) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const timer = window.setInterval(() => {
       setFrameIndex((index) => (index + 1) % frames.length)
     }, 900)
     return () => window.clearInterval(timer)
-  }, [view.mode, frames])
+  }, [view.mode, frames, marking])
+
+  useEffect(() => {
+    const frame = frames[frameIndex] ?? null
+    const baseline = view.mode === 'subtract' ? (frames[0] ?? null) : null
+    const last = orderNodes(view.marks).slice(-1)[0]
+    const leftover =
+      view.mode === 'subtract' && frame && baseline && last
+        ? countsAt(frame, last.pixelX, last.pixelY, baseline)
+        : null
+    onMetrics(describePattern(view.marks, leftover))
+  }, [frames, frameIndex, view.mode, view.marks, onMetrics])
 
   useEffect(() => {
     if (view.mode !== 'blink') return
@@ -270,6 +296,11 @@ export function LoadSequence({ view, onLayer, onEpochSpan, onMode, onBand }: Loa
             mask={view.mode === 'signal' && mask}
             onMaskNote={setMaskNote}
             path={path}
+            marks={view.marks}
+            marking={marking}
+            showOverlays={view.overlays}
+            captureRef={captureRef}
+            onMark={(point) => onMark({ ...point, observed: frame.observed })}
           />
         ) : null}
       </div>
