@@ -17,7 +17,25 @@ type InputRailProps = {
   onPatch: (patch: PatchSize) => void
 }
 
+type Aim = { ra: number; dec: number; label: string; source: AimSource }
+
 const PATCHES: PatchSize[] = ['tight', 'medium', 'wide']
+const STEP_COUNT = 3
+
+const STEPS = [
+  {
+    title: 'Where should we look?',
+    body: 'A city is enough. Coordinates are the next step.',
+  },
+  {
+    title: 'Check the coordinates',
+    body: 'These degrees are the spot. Change them if you want a different one.',
+  },
+  {
+    title: 'How wide a patch?',
+    body: 'Tight is a small patch. Wide covers more sky.',
+  },
+]
 
 export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
   const cityRef = useRef<MdTextField>(null)
@@ -26,6 +44,7 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
   const patchRef = useRef<HTMLElement>(null)
   const onCommitRef = useRef(onCommit)
   const onPatchRef = useRef(onPatch)
+  const [step, setStep] = useState(() => (view.committed ? 2 : 0))
   const [notice, setNotice] = useState('')
   const [locating, setLocating] = useState(false)
 
@@ -54,11 +73,6 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
       })
     }
 
-    const onCityBlur = () => {
-      if (!city.value.trim() || findCity(city.value)) return
-      setNotice('That city is not in the list. Try a large city, or type right ascension and declination.')
-    }
-
     const onSelection = (event: Event) => {
       const detail = (event as CustomEvent<{ selected: boolean; index: number }>).detail
       if (!detail?.selected) return
@@ -67,11 +81,9 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
     }
 
     city.addEventListener('input', onCity)
-    city.addEventListener('focusout', onCityBlur)
     patches.addEventListener('segmented-button-set-selection', onSelection)
     return () => {
       city.removeEventListener('input', onCity)
-      city.removeEventListener('focusout', onCityBlur)
       patches.removeEventListener('segmented-button-set-selection', onSelection)
     }
   }, [])
@@ -89,34 +101,74 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
     if (decRef.current) decRef.current.value = view.dec.toFixed(5)
   }, [view.ra, view.dec, view.source])
 
-  function inspect() {
-    const ra = readDegree(raRef.current?.value ?? '', 0, 360)
-    const dec = readDegree(decRef.current?.value ?? '', -90, 90)
+  function readTypedAim(): Aim | null {
     const raRaw = raRef.current?.value.trim() ?? ''
     const decRaw = decRef.current?.value.trim() ?? ''
+    if (!raRaw && !decRaw) {
+      if (view.ra == null || view.dec == null) {
+        setNotice('Type a city, or both coordinates.')
+        return null
+      }
+      return {
+        ra: view.ra,
+        dec: view.dec,
+        label: view.label || 'Map center',
+        source: view.source ?? 'coordinates',
+      }
+    }
 
-    if (raRaw || decRaw) {
-      if (ra == null || dec == null) {
-        setNotice('Right ascension is 0 to 360 degrees. Declination is -90 to 90 degrees.')
-        return
+    const ra = readDegree(raRaw, 0, 360)
+    const dec = readDegree(decRaw, -90, 90)
+    if (ra == null || dec == null) {
+      setNotice('Right ascension is 0 to 360 degrees. Declination is -90 to 90 degrees.')
+      return null
+    }
+
+    const edited =
+      view.ra == null ||
+      view.dec == null ||
+      Math.abs(ra - view.ra) > 0.0001 ||
+      Math.abs(dec - view.dec) > 0.0001
+    if (!edited && (view.source === 'city' || view.source === 'geolocation')) {
+      return { ra, dec, label: view.label, source: view.source }
+    }
+    return { ra, dec, label: 'Typed coordinates', source: 'coordinates' }
+  }
+
+  function goNext() {
+    if (step === 0) {
+      const name = cityRef.current?.value.trim() ?? ''
+      if (name) {
+        const match = findCity(name)
+        if (!match) {
+          setNotice('That city is not in the list. Try a large city, or leave this blank.')
+          return
+        }
+        const sky = zenith(match.lat, match.lon)
+        if (raRef.current) raRef.current.value = sky.ra.toFixed(5)
+        if (decRef.current) decRef.current.value = sky.dec.toFixed(5)
+        onCommit({ ra: sky.ra, dec: sky.dec, label: match.name, source: 'city' })
       }
       setNotice('')
-      onCommit({ ra, dec, label: 'Typed coordinates', source: 'coordinates' })
+      setStep(1)
       return
     }
 
-    if (view.ra == null || view.dec == null) {
-      setNotice('Type a city or both coordinates, then inspect.')
-      return
-    }
-
+    const aim = readTypedAim()
+    if (!aim) return
+    onCommit(aim)
     setNotice('')
-    onCommit({
-      ra: view.ra,
-      dec: view.dec,
-      label: view.label || 'Map center',
-      source: view.source ?? 'coordinates',
-    })
+    setStep(2)
+  }
+
+  function inspect() {
+    const aim = readTypedAim()
+    if (!aim) {
+      setStep(1)
+      return
+    }
+    setNotice('')
+    onCommit(aim)
   }
 
   function useMyLocation() {
@@ -138,6 +190,7 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
           label: 'Sky above you',
           source: 'geolocation',
         })
+        setStep(1)
       },
       () => {
         setLocating(false)
@@ -147,11 +200,23 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
     )
   }
 
+  const page = STEPS[step]
+
   return (
     <aside className="rail" aria-label="Choose a sky position">
       <h1>Ulysses</h1>
-      <p className="prompt">Which part of the sky do you want to explore?</p>
-      <div className="city-row">
+      <p className="step-count">
+        Step {step + 1} of {STEP_COUNT}
+      </p>
+      <ol className="dots" aria-hidden="true">
+        {STEPS.map((item, index) => (
+          <li key={item.title} className={index === step ? 'is-current' : undefined} />
+        ))}
+      </ol>
+      <p className="prompt">{page.title}</p>
+      <p className="hint">{page.body}</p>
+
+      <div className="step" hidden={step !== 0}>
         <md-outlined-text-field
           ref={cityRef}
           label="City"
@@ -161,13 +226,13 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
           {locating ? 'Finding you…' : 'Use my location'}
         </md-text-button>
       </div>
-      <div className="field-block">
+
+      <div className="step" hidden={step !== 1}>
         <md-outlined-text-field ref={raRef} label="Right ascension" supportingText="Degrees, from 0 to 360." />
-      </div>
-      <div className="field-block">
         <md-outlined-text-field ref={decRef} label="Declination" supportingText="Degrees, from -90 to 90." />
       </div>
-      <div className="field-block">
+
+      <div className="step" hidden={step !== 2}>
         <span className="hint" id="patch-label">
           Patch size
         </span>
@@ -177,18 +242,27 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
           <md-outlined-segmented-button label="Wide" data-patch="wide" />
         </md-outlined-segmented-button-set>
         <p className="hint">{PATCH_COPY[view.patch]}</p>
+        <p className="drag-note">The center of the map is the aim point.</p>
       </div>
-      <p className="drag-note">The center of the map is the aim point. Drag arrives with the guide map.</p>
+
       <p className="notice" role="status">
         {notice}
       </p>
-      <md-filled-button type="button" onClick={inspect}>
-        Inspect here
-      </md-filled-button>
-      <md-text-button
-        type="button"
-        onClick={() => setNotice('Community snapshots open in a later step.')}
-      >
+      <div className="pager">
+        <md-text-button type="button" disabled={step === 0} onClick={() => setStep((current) => current - 1)}>
+          Back
+        </md-text-button>
+        {step < 2 ? (
+          <md-filled-button type="button" onClick={goNext}>
+            Next
+          </md-filled-button>
+        ) : (
+          <md-filled-button type="button" onClick={inspect}>
+            Inspect here
+          </md-filled-button>
+        )}
+      </div>
+      <md-text-button type="button" onClick={() => setNotice('Community snapshots open in a later step.')}>
         Community
       </md-text-button>
     </aside>

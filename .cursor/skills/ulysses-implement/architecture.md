@@ -47,7 +47,8 @@ Locked decisions for the Ulysses SPHEREx app. PLAN.md is the product spec. This 
 
 ## Screen rules
 
-- The left input rail stays visible. City, geolocation, decimal RA/Dec, drag, patch size, and Inspect here are all on it.
+- The left rail stays visible and pages through three steps: city or my location, then coordinates, then patch size and Inspect. One step shows at a time.
+- The stage caption is the guide-map sentence in `src/App.tsx` until LoadSequence exists. It changes with the view: guide map, loading, SPHEREx pixels, or no visit.
 - Analysis controls appear only after a commit (Inspect, a city, coordinates, geolocation, or a starter).
 - Sky / Pixels is a real toggle, not a hidden hold.
 - Snapshot state stored with the PNG: mode, epoch range, subtract, band, Sky/Pixels, RA/Dec, patch size, pattern coordinates.

@@ -30,6 +30,7 @@ export function App() {
       <div className="shell">
         <InputRail view={view} onCommit={commit} onPatch={setPatch} />
         <main className="stage">
+          {/* Guide-map state only. LoadSequence replaces this when visits load or Sky/Pixels changes. */}
           <p className="stage-caption">Infrared guide map, not the SPHEREx exposure.</p>
           <div className="reticle" aria-hidden="true" />
           <TelemetryCard view={view} />
