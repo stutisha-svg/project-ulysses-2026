@@ -60,6 +60,12 @@ The only storage proposal allowed:
 
 Do not create those files until the user agrees.
 
+## Motion and layout
+
+Basic controls move by default. Use `--motion-duration` and `--motion-easing`. A step change slides. A state change fades color, outline, or opacity. Honor `prefers-reduced-motion`.
+
+A stepped pane keeps its action row fixed at the bottom. The question, the field, and the hint stay in the scrolling middle, with space between those three. Do not let Back and Next jump when the step gets taller or a notice appears.
+
 ## When something breaks
 
 Ask if any issue arises, do not fix on your own.

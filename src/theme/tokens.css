@@ -43,6 +43,9 @@ html {
   --md-sys-shape-corner-large: 16px;
   --md-sys-shape-corner-extra-large: 28px;
   --md-sys-shape-corner-full: 999px;
+  /* Basic controls use these. A step change slides. A state change fades. */
+  --motion-duration: 280ms;
+  --motion-easing: cubic-bezier(0.2, 0, 0, 1);
   background: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
   font-family: Roboto, sans-serif;
@@ -58,4 +61,10 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    --motion-duration: 1ms;
+  }
 }

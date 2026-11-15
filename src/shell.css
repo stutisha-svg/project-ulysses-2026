@@ -9,15 +9,21 @@
 .rail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   box-sizing: border-box;
   height: 100vh;
-  padding: 16px 14px 20px;
-  overflow: auto;
+  padding: 20px 16px 16px;
+  overflow: hidden;
   background: var(--md-sys-color-surface-container);
   border-right: 1px solid var(--md-sys-color-outline);
   border-top-right-radius: 28px;
   border-bottom-right-radius: 28px;
+}
+
+.rail-head {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .rail h1 {
@@ -30,8 +36,9 @@
 .rail .prompt {
   margin: 0;
   color: var(--md-sys-color-on-surface);
-  font-size: 14px;
-  line-height: 1.35;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .step-count {
@@ -40,6 +47,7 @@
   font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  animation: fade-in var(--motion-duration) var(--motion-easing);
 }
 
 .dots {
@@ -55,20 +63,78 @@
   height: 8px;
   border-radius: 999px;
   background: var(--md-sys-color-outline);
+  transition:
+    width var(--motion-duration) var(--motion-easing),
+    background-color var(--motion-duration) var(--motion-easing);
 }
 
 .dots li.is-current {
+  width: 18px;
   background: var(--md-sys-color-primary);
+}
+
+.step-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.step-track {
+  display: flex;
+  align-items: flex-start;
+  width: 300%;
+  transition: transform var(--motion-duration) var(--motion-easing);
+  transform: translateX(calc(var(--step) * -33.333333%));
 }
 
 .step {
   display: flex;
+  flex: 0 0 33.333333%;
   flex-direction: column;
-  gap: 8px;
+  min-width: 0;
 }
 
-.step[hidden] {
-  display: none;
+.step .hint {
+  margin-top: 8px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.rail-footer {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.rail md-outlined-text-field {
+  --md-outlined-field-container-shape: 16px;
+  --md-outlined-field-outline-color: var(--md-sys-color-outline);
+  --md-outlined-field-outline-width: 1px;
+  --md-outlined-field-hover-outline-color: var(--md-sys-color-on-surface);
+  --md-outlined-field-hover-outline-width: 1px;
+  --md-outlined-field-focus-outline-color: var(--md-sys-color-primary);
+  --md-outlined-field-focus-outline-width: 2px;
+  --md-outlined-field-label-text-color: var(--md-sys-color-on-surface-variant);
+  --md-outlined-field-focus-label-text-color: var(--md-sys-color-primary);
+}
+
+.rail md-filled-button {
+  --md-filled-button-container-shape: 16px;
+  --md-filled-button-container-height: 40px;
+}
+
+.rail md-text-button {
+  --md-text-button-container-shape: 16px;
+  --md-text-button-label-text-color: var(--md-sys-color-primary);
 }
 
 .pager {
@@ -97,8 +163,18 @@
 }
 
 .notice {
-  min-height: 1.35em;
+  min-height: 2.7em;
   color: var(--md-sys-color-on-surface);
+  transition: opacity var(--motion-duration) var(--motion-easing);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .field-block {

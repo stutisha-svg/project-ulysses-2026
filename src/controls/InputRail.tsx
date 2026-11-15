@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { findCity } from '../data/cities'
 import { zenith } from '../lib/zenith'
 import {
@@ -200,71 +200,84 @@ export function InputRail({ view, onCommit, onPatch }: InputRailProps) {
     )
   }
 
-  const page = STEPS[step]
-
   return (
     <aside className="rail" aria-label="Choose a sky position">
-      <h1>Ulysses</h1>
-      <p className="step-count">
-        Step {step + 1} of {STEP_COUNT}
-      </p>
-      <ol className="dots" aria-hidden="true">
-        {STEPS.map((item, index) => (
-          <li key={item.title} className={index === step ? 'is-current' : undefined} />
-        ))}
-      </ol>
-      <p className="prompt">{page.title}</p>
-      <p className="hint">{page.body}</p>
+      <header className="rail-head">
+        <h1>Ulysses</h1>
+        <p className="step-count" key={step}>
+          Step {step + 1} of {STEP_COUNT}
+        </p>
+        <ol className="dots" aria-hidden="true">
+          {STEPS.map((item, index) => (
+            <li key={item.title} className={index === step ? 'is-current' : undefined} />
+          ))}
+        </ol>
+      </header>
+      <div className="step-viewport">
+        <div className="step-track" style={{ '--step': step } as CSSProperties}>
+          <div className="step" inert={step !== 0}>
+            <p className="prompt">{STEPS[0].title}</p>
+            <p className="hint">{STEPS[0].body}</p>
+            <div className="fields">
+              <md-outlined-text-field
+                ref={cityRef}
+                label="City"
+                supportingText="A city name. The sky above it, right now."
+              />
+              <md-text-button type="button" disabled={locating} onClick={useMyLocation}>
+                {locating ? 'Finding you…' : 'Use my location'}
+              </md-text-button>
+            </div>
+          </div>
+          <div className="step" inert={step !== 1}>
+            <p className="prompt">{STEPS[1].title}</p>
+            <p className="hint">{STEPS[1].body}</p>
+            <div className="fields">
+              <md-outlined-text-field ref={raRef} label="Right ascension" supportingText="Degrees, from 0 to 360." />
+              <md-outlined-text-field ref={decRef} label="Declination" supportingText="Degrees, from -90 to 90." />
+            </div>
+          </div>
+          <div className="step" inert={step !== 2}>
+            <p className="prompt">{STEPS[2].title}</p>
+            <p className="hint">{STEPS[2].body}</p>
+            <div className="fields">
+              <span className="hint" id="patch-label">
+                Patch size
+              </span>
+              <md-outlined-segmented-button-set ref={patchRef} aria-labelledby="patch-label">
+                <md-outlined-segmented-button label="Tight" data-patch="tight" />
+                <md-outlined-segmented-button label="Medium" data-patch="medium" />
+                <md-outlined-segmented-button label="Wide" data-patch="wide" />
+              </md-outlined-segmented-button-set>
+              <p className="hint">{PATCH_COPY[view.patch]}</p>
+              <p className="drag-note">The center of the map is the aim point.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <div className="step" hidden={step !== 0}>
-        <md-outlined-text-field
-          ref={cityRef}
-          label="City"
-          supportingText="A city name. The sky above it, right now."
-        />
-        <md-text-button type="button" disabled={locating} onClick={useMyLocation}>
-          {locating ? 'Finding you…' : 'Use my location'}
+      <footer className="rail-footer">
+        <p className="notice" role="status">
+          {notice}
+        </p>
+        <div className="pager">
+          <md-text-button type="button" disabled={step === 0} onClick={() => setStep((current) => Math.max(0, current - 1))}>
+            Back
+          </md-text-button>
+          {step < 2 ? (
+            <md-filled-button type="button" onClick={goNext}>
+              Next
+            </md-filled-button>
+          ) : (
+            <md-filled-button type="button" onClick={inspect}>
+              Inspect here
+            </md-filled-button>
+          )}
+        </div>
+        <md-text-button type="button" onClick={() => setNotice('Community snapshots open in a later step.')}>
+          Community
         </md-text-button>
-      </div>
-
-      <div className="step" hidden={step !== 1}>
-        <md-outlined-text-field ref={raRef} label="Right ascension" supportingText="Degrees, from 0 to 360." />
-        <md-outlined-text-field ref={decRef} label="Declination" supportingText="Degrees, from -90 to 90." />
-      </div>
-
-      <div className="step" hidden={step !== 2}>
-        <span className="hint" id="patch-label">
-          Patch size
-        </span>
-        <md-outlined-segmented-button-set ref={patchRef} aria-labelledby="patch-label">
-          <md-outlined-segmented-button label="Tight" data-patch="tight" />
-          <md-outlined-segmented-button label="Medium" data-patch="medium" />
-          <md-outlined-segmented-button label="Wide" data-patch="wide" />
-        </md-outlined-segmented-button-set>
-        <p className="hint">{PATCH_COPY[view.patch]}</p>
-        <p className="drag-note">The center of the map is the aim point.</p>
-      </div>
-
-      <p className="notice" role="status">
-        {notice}
-      </p>
-      <div className="pager">
-        <md-text-button type="button" disabled={step === 0} onClick={() => setStep((current) => current - 1)}>
-          Back
-        </md-text-button>
-        {step < 2 ? (
-          <md-filled-button type="button" onClick={goNext}>
-            Next
-          </md-filled-button>
-        ) : (
-          <md-filled-button type="button" onClick={inspect}>
-            Inspect here
-          </md-filled-button>
-        )}
-      </div>
-      <md-text-button type="button" onClick={() => setNotice('Community snapshots open in a later step.')}>
-        Community
-      </md-text-button>
+      </footer>
     </aside>
   )
 }
