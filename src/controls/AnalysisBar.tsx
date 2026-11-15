@@ -102,7 +102,7 @@ export function AnalysisBar({
       <div ref={modeRef} className="analysis-modes">
         <md-outlined-segmented-button-set aria-label="Analysis">
           {MODES.map((item) => (
-            <md-outlined-segmented-button key={item.id} label={item.label} title={item.tip} selected={mode === item.id}>
+            <md-outlined-segmented-button key={item.id} label={item.label} title={item.tip} selected={mode === item.id} noCheckmark>
               <svg slot="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
                 <path d={item.icon} fill="currentColor" />
               </svg>
@@ -117,12 +117,14 @@ export function AnalysisBar({
               label="Hot"
               title="Detectors D1–D2, about 0.9–1.4 μm"
               selected={band === 'hot'}
+              noCheckmark
               onClick={() => onBand('hot')}
             />
             <md-outlined-segmented-button
               label="Cold"
               title="Detectors D4–D6, about 3–5 μm"
               selected={band === 'cold'}
+              noCheckmark
               onClick={() => onBand('cold')}
             />
           </md-outlined-segmented-button-set>

@@ -260,9 +260,9 @@ export function InputRail({ view, collapsed, onToggle, onCommit, onPatch }: Inpu
                 Patch size
               </span>
               <md-outlined-segmented-button-set ref={patchRef} aria-labelledby="patch-label">
-                <md-outlined-segmented-button label="Tight" data-patch="tight" />
-                <md-outlined-segmented-button label="Medium" data-patch="medium" />
-                <md-outlined-segmented-button label="Wide" data-patch="wide" />
+                <md-outlined-segmented-button label="Tight" data-patch="tight" noCheckmark />
+                <md-outlined-segmented-button label="Medium" data-patch="medium" noCheckmark />
+                <md-outlined-segmented-button label="Wide" data-patch="wide" noCheckmark />
               </md-outlined-segmented-button-set>
               <p className="hint">{PATCH_COPY[view.patch]}</p>
               <p className="drag-note">The center of the map is the aim point.</p>

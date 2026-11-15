@@ -7,6 +7,7 @@ type MdNode = DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement> & {
   selected?: boolean
   disabled?: boolean
   supportingText?: string
+  noCheckmark?: boolean
 }
 
 declare module 'react' {

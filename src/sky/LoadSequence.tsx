@@ -257,8 +257,8 @@ export function LoadSequence({ view, onLayer, onEpochSpan, onMode, onBand }: Loa
       </div>
       <div ref={layerRef} className="layer-toggle">
         <md-outlined-segmented-button-set aria-label="Sky or pixels">
-          <md-outlined-segmented-button label="Sky" data-layer="sky" />
-          <md-outlined-segmented-button label="Pixels" data-layer="pixels" disabled={!frame} />
+          <md-outlined-segmented-button label="Sky" data-layer="sky" noCheckmark />
+          <md-outlined-segmented-button label="Pixels" data-layer="pixels" disabled={!frame} noCheckmark />
         </md-outlined-segmented-button-set>
       </div>
       <div className={showPixels ? 'pixel-layer is-on' : 'pixel-layer'}>

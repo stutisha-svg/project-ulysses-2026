@@ -94,7 +94,8 @@ export function PixelStage({ frame, baseline, contrast, mask, onMaskNote, path }
           viewBox={`0 0 ${placed.width} ${placed.height}`}
           aria-hidden="true"
         >
-          <polyline points={line} />
+          <polyline className="path-halo" points={line} />
+          <polyline className="path-line" points={line} />
         </svg>
       ) : null}
       {/* The cutout stays in spacecraft orientation. This mark is only a direction. */}
