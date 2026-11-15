@@ -1,0 +1,184 @@
+.shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+  min-height: 390px;
+  background: var(--md-sys-color-surface);
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  height: 100vh;
+  padding: 16px 14px 20px;
+  overflow: auto;
+  background: var(--md-sys-color-surface-container);
+  border-right: 1px solid var(--md-sys-color-outline);
+  border-top-right-radius: 28px;
+  border-bottom-right-radius: 28px;
+}
+
+.rail h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.rail .prompt {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.city-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hint,
+.drag-note,
+.notice {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.notice {
+  min-height: 1.35em;
+  color: var(--md-sys-color-on-surface);
+}
+
+.field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+md-outlined-text-field,
+md-outlined-segmented-button-set,
+md-filled-button,
+md-text-button {
+  width: 100%;
+}
+
+.stage {
+  position: relative;
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--md-sys-color-surface);
+}
+
+.stage-caption {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1;
+  max-width: 36ch;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 50%;
+}
+
+.reticle::before,
+.reticle::after {
+  content: "";
+  position: absolute;
+  background: var(--md-sys-color-on-surface);
+}
+
+.reticle::before {
+  top: 50%;
+  left: 4px;
+  width: 18px;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.reticle::after {
+  top: 4px;
+  left: 50%;
+  width: 1px;
+  height: 18px;
+  transform: translateX(-50%);
+}
+
+.telemetry {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1;
+  width: min(280px, calc(100% - 32px));
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.telemetry h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.telemetry dl {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.telemetry dt {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.telemetry dd {
+  margin: 0;
+}
+
+.rotate {
+  display: none;
+  box-sizing: border-box;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  background: var(--md-sys-color-surface);
+}
+
+@media (orientation: portrait) {
+  .shell {
+    display: none;
+  }
+
+  .rotate {
+    display: flex;
+  }
+}

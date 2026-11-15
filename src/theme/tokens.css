@@ -1,0 +1,61 @@
+html {
+  color-scheme: dark;
+  --md-sys-color-primary: #a8c7fa;
+  --md-sys-color-on-primary: #0e0e10;
+  --md-sys-color-primary-container: #1a1a1e;
+  --md-sys-color-on-primary-container: #a8c7fa;
+  --md-sys-color-secondary: #a8c7fa;
+  --md-sys-color-on-secondary: #0e0e10;
+  --md-sys-color-secondary-container: #1a1a1e;
+  --md-sys-color-on-secondary-container: #f4f4f6;
+  --md-sys-color-tertiary: #a8c7fa;
+  --md-sys-color-on-tertiary: #0e0e10;
+  --md-sys-color-tertiary-container: #1a1a1e;
+  --md-sys-color-on-tertiary-container: #f4f4f6;
+  --md-sys-color-error: #f4f4f6;
+  --md-sys-color-on-error: #0e0e10;
+  --md-sys-color-error-container: #44444a;
+  --md-sys-color-on-error-container: #f4f4f6;
+  --md-sys-color-surface: #0e0e10;
+  --md-sys-color-on-surface: #f4f4f6;
+  --md-sys-color-on-surface-variant: #c8c8ce;
+  --md-sys-color-surface-dim: #0e0e10;
+  --md-sys-color-surface-bright: #2a2a30;
+  --md-sys-color-surface-container-lowest: #0e0e10;
+  --md-sys-color-surface-container-low: #141418;
+  --md-sys-color-surface-container: #1a1a1e;
+  --md-sys-color-surface-container-high: #222228;
+  --md-sys-color-surface-container-highest: #2a2a30;
+  --md-sys-color-outline: #44444a;
+  --md-sys-color-outline-variant: #44444a;
+  --md-sys-color-inverse-surface: #f4f4f6;
+  --md-sys-color-inverse-on-surface: #0e0e10;
+  --md-sys-color-inverse-primary: #0e0e10;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+  --md-ref-typeface-brand: Roboto, sans-serif;
+  --md-ref-typeface-plain: Roboto, sans-serif;
+  --md-sys-typescale-body-medium-font: Roboto, sans-serif;
+  --md-sys-typescale-label-large-font: Roboto, sans-serif;
+  --md-sys-shape-corner-extra-small: 8px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 16px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 999px;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: Roboto, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
