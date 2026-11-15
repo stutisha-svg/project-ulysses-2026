@@ -1,6 +1,10 @@
 export type AladinView = {
   gotoRaDec: (ra: number, dec: number) => void
+  // Seconds. Moves the center only. It does not change the field of view.
+  animateToRaDec: (ra: number, dec: number, seconds: number, done?: () => void) => void
+  stopAnimation: () => void
   setFoV: (fov: number) => void
+  zoomToFoV: (fov: number, seconds: number, done?: () => void) => void
   getFoV: () => number[]
   getRaDec: () => [number, number]
   world2pix: (ra: number, dec: number) => [number, number]
