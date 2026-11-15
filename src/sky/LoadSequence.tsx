@@ -185,12 +185,15 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
       {phase === 'empty' ? (
         <p className="visit-empty">SPHEREx has not visited this spot.</p>
       ) : (
-        <ol
-          ref={timelineRef}
-          className="visit-timeline"
-          aria-label="SPHEREx visits"
-          onScroll={onTimelineScroll}
-        >
+        <div className="visit-strip">
+          {/* The strip's name. Scrolling or tapping a date changes the frame on screen. */}
+          <h2 id="visit-strip-title" className="visit-strip-title">Move through the visits</h2>
+          <ol
+            ref={timelineRef}
+            className="visit-timeline"
+            aria-labelledby="visit-strip-title"
+            onScroll={onTimelineScroll}
+          >
           {dates.map((visit, index) => (
             <li
               key={`${visit.observed}-${index}`}
@@ -209,7 +212,8 @@ export function LoadSequence({ view, onLayer, onEpochSpan }: LoadSequenceProps) 
               {formatVisit(visit.observed)}
             </li>
           ))}
-        </ol>
+          </ol>
+        </div>
       )}
     </>
   )

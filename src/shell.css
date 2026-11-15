@@ -419,14 +419,22 @@ md-text-button {
   text-align: center;
 }
 
-.visit-timeline,
+.visit-strip,
 .visit-empty {
   position: absolute;
   right: 16px;
   bottom: 16px;
   z-index: 2;
-  max-width: min(200px, 36%);
+  max-width: min(220px, 40%);
   margin: 0;
+}
+
+.visit-strip-title {
+  margin: 0 0 6px;
+  color: var(--md-sys-color-on-surface);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .visit-timeline {
