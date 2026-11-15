@@ -10,7 +10,7 @@ Locked decisions for the Ulysses SPHEREx app. PLAN.md is the product spec. This 
 - Pattern ID colors are the only other saturated marks, and they are never `#A8C7FA`.
 - Guide map and detector frames stay scientific grayscale. A difference image is neutral gray: dark is negative, light is positive.
 - Type: Roboto. Rail and FAB container inner corners 28dp. Cards and buttons 16dp. Dark elevation is tonal surface steps.
-- Fetcher: FastAPI in `server/spherex.py` (astropy, astroquery). Vite proxies `/api`. Disk cache is gitignored.
+- Fetcher: FastAPI in `server/spherex.py` (astropy, astroquery). Vite proxies `/api`. Disk cache is gitignored. Visit lookup is IRSA SIA collection `spherex_dr1` while TAP returns 502. The TAP SQL stays commented in `query_archive`.
 - No account server. The gallery is seeded demo posts plus this browser's `localStorage`.
 
 ## File map
@@ -24,7 +24,7 @@ Locked decisions for the Ulysses SPHEREx app. PLAN.md is the product spec. This 
 | Input rail | `src/controls/InputRail.tsx` |
 | Telemetry card | `src/controls/TelemetryCard.tsx` |
 | City list and zenith | `src/data/cities.ts`, `src/lib/zenith.ts` |
-| Guide map (unWISE HiPS) | `src/sky/GuideMap.tsx` |
+| Guide map (unWISE HiPS) | `src/sky/GuideMap.tsx`, `src/aladin.d.ts` |
 | Starter copy and tracks | `src/data/starters.ts` |
 | Visit timeline and Sky / Pixels | `src/sky/LoadSequence.tsx` |
 | Detector frames, blink, subtract, bands, stretch | `src/sky/PixelStage.tsx` |
@@ -32,7 +32,7 @@ Locked decisions for the Ulysses SPHEREx app. PLAN.md is the product spec. This 
 | Marker and Pattern IDs | `src/lib/patterns.ts` |
 | Query-string state | `src/state/viewState.ts` |
 | Community gallery | `src/community/Feed.tsx` |
-| TAP, cutouts, cache, band groups | `server/spherex.py`, `server/requirements.txt` |
+| SIA visits (TAP SQL commented), cutouts, cache, band groups | `server/spherex.py`, `server/requirements.txt` |
 
 ## Science rules
 

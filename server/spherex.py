@@ -7,10 +7,12 @@ No API key: the archive queries used here are public.
 from __future__ import annotations
 
 import base64
+import csv
 import io
 import math
 import time
 from pathlib import Path
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import numpy as np
@@ -41,7 +43,11 @@ BAND_MID_UM = {
 MAX_FRAMES = 6
 # Exposures closer than this are one visit, not two epochs.
 VISIT_GAP_DAYS = 1.0
+# Planned lookup. Left here so the TAP query below can be restored when it answers.
 TAP_URL = "https://irsa.ipac.caltech.edu/TAP/sync"
+# Public image search that is answering. spherex_dr1 is the same release TAP reads.
+SIA_URL = "https://irsa.ipac.caltech.edu/SIA"
+SIA_COLLECTION = "spherex_dr1"
 CACHE = Path(__file__).resolve().parent / "cache"
 
 app = FastAPI(title="Ulysses SPHEREx")
@@ -98,37 +104,54 @@ def all_bandpasses() -> tuple[str, ...]:
 
 
 def query_archive(ra: float, dec: float, size: float, bandpasses: tuple[str, ...]) -> list[dict]:
-    names = ", ".join(f"'{name}'" for name in bandpasses)
-    # Numbers are validated by the route. Band names come from BAND_GROUPS, not the caller.
-    query = f"""
-        SELECT
-            'https://irsa.ipac.caltech.edu/' || a.uri
-                || '?center={ra:.6f},{dec:.6f}d&size={size:.4f}' AS uri,
-            p.time_bounds_lower AS observed,
-            p.energy_bandpassname AS bandpass
-        FROM spherex.artifact a
-        JOIN spherex.plane p ON a.planeid = p.planeid
-        WHERE 1 = CONTAINS(POINT('ICRS', {ra:.6f}, {dec:.6f}), p.poly)
-          AND p.energy_bandpassname IN ({names})
-        ORDER BY p.time_bounds_lower
-    """
+    # Planned lookup is IRSA TAP. It is returning 502, so visits come from SIA.
+    # Restore this SQL through TAP_URL when TAP is healthy. Band names stay in the query,
+    # not in caller input. The search is the point, and size is only the cutout.
+    #
+    # SELECT
+    #     'https://irsa.ipac.caltech.edu/' || a.uri
+    #         || '?center=' || ra || ',' || dec || 'd&size=' || size AS uri,
+    #     p.time_bounds_lower AS observed,
+    #     p.energy_bandpassname AS bandpass
+    # FROM spherex.artifact a
+    # JOIN spherex.plane p ON a.planeid = p.planeid
+    # WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), p.poly)
+    #   AND p.energy_bandpassname IN (BAND_GROUPS)
+    # ORDER BY p.time_bounds_lower
+    #
+    # nasa-irsa-spherex holds these same FITS files. It has no position index, and its
+    # HiPS folder is order-5 spectral cubes with no properties file, so it is not a lookup.
+    wanted = set(bandpasses)
+    params = urlencode(
+        {
+            "COLLECTION": SIA_COLLECTION,
+            "POS": f"circle {ra:.6f} {dec:.6f} 0.001",
+            "RESPONSEFORMAT": "CSV",
+            "MAXREC": "5000",
+        }
+    )
+    request = Request(f"{SIA_URL}?{params}", headers={"User-Agent": "Ulysses-SPHEREx/0.1"})
     try:
-        from astroquery.ipac.irsa import Irsa
-
-        table = Irsa.query_tap(query)
+        with urlopen(request, timeout=90) as response:
+            text = response.read().decode("utf-8")
     except Exception as error:
-        raise HTTPException(status_code=502, detail=f"IRSA TAP failed: {error}") from error
+        raise HTTPException(status_code=502, detail=f"IRSA SIA failed: {error}") from error
 
     found = []
-    for row in table:
+    for row in csv.DictReader(io.StringIO(text)):
+        band = row.get("energy_bandpassname") or ""
+        access = row.get("access_url") or ""
+        if band not in wanted or not access:
+            continue
         found.append(
             {
-                "uri": str(row["uri"]),
-                "observed": stringify(row["observed"]),
-                "mjd": to_mjd(row["observed"]),
-                "bandpass": str(row["bandpass"]),
+                "uri": f"{access}?center={ra:.6f},{dec:.6f}d&size={size:.4f}",
+                "observed": stringify(row.get("t_min")),
+                "mjd": to_mjd(row.get("t_min")),
+                "bandpass": band,
             }
         )
+    found.sort(key=lambda item: (item["mjd"] is None, item["mjd"] or 0))
     return found
 
 
