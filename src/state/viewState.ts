@@ -2,6 +2,8 @@ export type PatchSize = 'tight' | 'medium' | 'wide'
 
 export type AimSource = 'city' | 'geolocation' | 'coordinates' | 'starter' | 'drag'
 
+export type SkyLayer = 'sky' | 'pixels'
+
 export type ViewState = {
   ra: number | null
   dec: number | null
@@ -9,6 +11,10 @@ export type ViewState = {
   committed: boolean
   label: string
   source: AimSource | null
+  // Sky until the first frame, unless the query already chose.
+  layer: SkyLayer
+  // False until the user or a loaded frame writes `layer` into the query.
+  layerChosen: boolean
 }
 
 // Degrees on the sky for the three patch stops. The fetcher reads these when cutouts start.
@@ -31,6 +37,8 @@ const EMPTY: ViewState = {
   committed: false,
   label: '',
   source: null,
+  layer: 'sky',
+  layerChosen: false,
 }
 
 // Analysis keys (mode, band, subtract, sky or pixels) join this query when those controls exist.
@@ -39,6 +47,7 @@ export function readView(search = window.location.search): ViewState {
   const ra = readDegree(params.get('ra'), 0, 360)
   const dec = readDegree(params.get('dec'), -90, 90)
   const patch = readPatch(params.get('patch'))
+  const layer = readLayer(params.get('layer'))
   if (ra == null || dec == null) {
     return { ...EMPTY, patch }
   }
@@ -49,6 +58,8 @@ export function readView(search = window.location.search): ViewState {
     committed: true,
     label: 'Saved view',
     source: 'coordinates',
+    layer: layer ?? 'sky',
+    layerChosen: layer != null,
   }
 }
 
@@ -58,6 +69,9 @@ export function writeView(state: ViewState): void {
     params.set('ra', state.ra.toFixed(5))
     params.set('dec', state.dec.toFixed(5))
     params.set('patch', state.patch)
+    // Sky / Pixels is part of the saved view once a frame or the user has chosen it.
+    if (state.layerChosen) params.set('layer', state.layer)
+    else params.delete('layer')
   }
   const next = params.toString()
   const url = `${window.location.pathname}${next ? `?${next}` : ''}`
@@ -69,6 +83,11 @@ function readDegree(value: string | null, min: number, max: number): number | nu
   const parsed = Number(value)
   if (!Number.isFinite(parsed) || parsed < min || parsed > max) return null
   return parsed
+}
+
+function readLayer(value: string | null): SkyLayer | null {
+  if (value === 'sky' || value === 'pixels') return value
+  return null
 }
 
 function readPatch(value: string | null): PatchSize {

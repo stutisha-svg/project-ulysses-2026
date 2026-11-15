@@ -131,11 +131,23 @@ def query_archive(ra: float, dec: float, size: float, bandpasses: tuple[str, ...
         }
     )
     request = Request(f"{SIA_URL}?{params}", headers={"User-Agent": "Ulysses-SPHEREx/0.1"})
-    try:
-        with urlopen(request, timeout=90) as response:
-            text = response.read().decode("utf-8")
-    except Exception as error:
-        raise HTTPException(status_code=502, detail=f"IRSA SIA failed: {error}") from error
+    text = ""
+    last_error: Exception | None = None
+    for attempt in range(2):
+        try:
+            with urlopen(request, timeout=90) as response:
+                text = response.read().decode("utf-8")
+            last_error = None
+            break
+        except Exception as error:
+            last_error = error
+            # The IRSA proxy sometimes answers 502 for a moment. Try the same search once more.
+            if attempt == 0 and getattr(error, "code", None) in (502, 503):
+                time.sleep(2)
+                continue
+            break
+    if last_error is not None:
+        raise HTTPException(status_code=502, detail=f"IRSA SIA failed: {last_error}") from last_error
 
     found = []
     for row in csv.DictReader(io.StringIO(text)):

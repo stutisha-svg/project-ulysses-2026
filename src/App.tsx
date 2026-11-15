@@ -2,14 +2,25 @@ import { useState } from 'react'
 import { InputRail } from './controls/InputRail'
 import { TelemetryCard } from './controls/TelemetryCard'
 import { GuideMap } from './sky/GuideMap'
-import { readView, writeView, type AimSource, type PatchSize, type ViewState } from './state/viewState'
+import { LoadSequence } from './sky/LoadSequence'
+import { readView, writeView, type AimSource, type PatchSize, type SkyLayer, type ViewState } from './state/viewState'
 
 export function App() {
   const [view, setView] = useState<ViewState>(() => readView())
+  const [epochSpan, setEpochSpan] = useState('')
 
   function commit(aim: { ra: number; dec: number; label: string; source: AimSource }) {
+    setEpochSpan('')
     setView((current) => {
-      const next = { ...current, ...aim, committed: true }
+      const next = { ...current, ...aim, committed: true, layer: 'sky' as const, layerChosen: false }
+      writeView(next)
+      return next
+    })
+  }
+
+  function setLayer(layer: SkyLayer) {
+    setView((current) => {
+      const next = { ...current, layer, layerChosen: true }
       writeView(next)
       return next
     })
@@ -46,10 +57,9 @@ export function App() {
         <InputRail view={view} onCommit={commit} onPatch={setPatch} />
         <main className="stage">
           <GuideMap view={view} onCommit={commit} onAim={aimFromMap} />
-          {/* Guide-map state only. LoadSequence replaces this when visits load or Sky/Pixels changes. */}
-          <p className="stage-caption">Visible-light stand-in. The infrared survey is offline. Not a SPHEREx exposure.</p>
+          <LoadSequence view={view} onLayer={setLayer} onEpochSpan={setEpochSpan} />
           <div className="reticle" aria-hidden="true" />
-          <TelemetryCard view={view} />
+          <TelemetryCard view={view} epochSpan={epochSpan} />
         </main>
       </div>
     </>

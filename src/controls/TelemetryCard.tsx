@@ -3,9 +3,10 @@ import type { ViewState } from '../state/viewState'
 
 type TelemetryCardProps = {
   view: ViewState
+  epochSpan?: string
 }
 
-export function TelemetryCard({ view }: TelemetryCardProps) {
+export function TelemetryCard({ view, epochSpan }: TelemetryCardProps) {
   if (view.ra == null || view.dec == null) return null
 
   return (
@@ -19,7 +20,7 @@ export function TelemetryCard({ view }: TelemetryCardProps) {
         <dt>Place</dt>
         <dd>{view.label || 'Map center'}</dd>
         <dt>Epoch span</dt>
-        <dd>Not loaded yet</dd>
+        <dd>{epochSpan || 'Not loaded yet'}</dd>
         <dt>Pattern IDs</dt>
         <dd>None yet</dd>
       </dl>
