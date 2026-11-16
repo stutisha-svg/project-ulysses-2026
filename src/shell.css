@@ -268,10 +268,10 @@ md-outlined-segmented-button {
 .si-note {
   position: absolute;
   z-index: 3;
-  top: 12px;
+  top: 72px;
   right: 16px;
   margin: 0;
-  max-width: 28ch;
+  width: 180px;
   padding: 4px 8px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--md-sys-color-surface) 88%, transparent);
