@@ -691,11 +691,10 @@ md-outlined-segmented-button {
 }
 
 .north-mark {
-  position: absolute;
-  top: 72px;
-  right: 28px;
+  position: relative;
   width: 18px;
   height: 36px;
+  margin: 0 0 8px auto;
   transform-origin: 50% 100%;
 }
 

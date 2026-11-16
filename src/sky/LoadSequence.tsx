@@ -278,6 +278,16 @@ export function LoadSequence({
         <p className="visit-empty">SPHEREx has not visited this spot.</p>
       ) : (
         <div className="visit-strip">
+          {frame ? (
+            // The cutout stays in spacecraft orientation. This mark is only a direction.
+            <div
+              className="north-mark"
+              style={{ transform: `rotate(${frame.northAngleDeg ?? 0}deg)` }}
+              aria-hidden="true"
+            >
+              <span>N</span>
+            </div>
+          ) : null}
           {/* The strip's name. Scrolling or tapping a date changes the frame on screen. */}
           <h2 id="visit-strip-title" className="visit-strip-title">Move through the visits</h2>
           <ol

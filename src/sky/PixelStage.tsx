@@ -178,14 +178,6 @@ export function PixelStage({
           ))}
         </svg>
       ) : null}
-      {/* The cutout stays in spacecraft orientation. This mark is only a direction. */}
-      <div
-        className="north-mark"
-        style={{ transform: `rotate(${frame.northAngleDeg ?? 0}deg)` }}
-        aria-hidden="true"
-      >
-        <span>N</span>
-      </div>
     </div>
   )
 }
