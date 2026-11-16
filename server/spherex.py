@@ -20,6 +20,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
 from PIL import Image
 
 # Hot stars: detectors D1–D2, about 0.75–1.6 μm.
@@ -419,3 +420,27 @@ def stringify(value) -> str:
     if value is None:
         return ""
     return str(value)
+
+
+# The built site sits beside this file on the host. Local Vite does not use it.
+# These routes stay last so /api keeps the handlers above.
+DIST = Path(__file__).resolve().parent / "dist"
+
+
+@app.get("/")
+def site_index():
+    page = DIST / "index.html"
+    if not page.is_file():
+        raise HTTPException(status_code=404, detail="The site has not been built.")
+    return FileResponse(page)
+
+
+@app.get("/{full_path:path}")
+def site_file(full_path: str):
+    candidate = (DIST / full_path).resolve()
+    if candidate.is_file() and DIST.resolve() in candidate.parents:
+        return FileResponse(candidate)
+    page = DIST / "index.html"
+    if page.is_file():
+        return FileResponse(page)
+    raise HTTPException(status_code=404, detail="The site has not been built.")

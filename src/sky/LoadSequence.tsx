@@ -25,22 +25,7 @@ type LoadSequenceProps = {
 type Phase = 'idle' | 'finding' | 'opening' | 'ready' | 'empty' | 'error'
 
 const GUIDE_CAPTION = 'Visible-light stand-in. The infrared survey is offline. Not a SPHEREx exposure.'
-// First inspection only. A later visit of the same browser skips the lesson.
-const FIRST_LOOK_KEY = 'ulysses-first-look'
-const FIRST_LOOK = [
-  {
-    title: 'These speckles are not stars',
-    body: 'This is one SPHEREx wavelength, stretched from a handful of detector pixels. The grain across the frame is noise.',
-  },
-  {
-    title: 'Look for one brighter knot',
-    body: 'A real source is the patch that stays brighter than the grain and keeps its shape. Ignore the speckles around it.',
-  },
-  {
-    title: 'Move through the visits',
-    body: 'The dates at the lower right change the picture. If the knot shifts, a line appears after the third visit. That line is the motion.',
-  },
-]
+const GUIDE_TASK = 'Tap a labeled dot. The frames are one wavelength at a time, compared across dates.'
 
 export function LoadSequence({
   view,
@@ -58,8 +43,6 @@ export function LoadSequence({
   const [shown, setShown] = useState(0)
   const [frames, setFrames] = useState<DetectorFrame[]>([])
   const [frameIndex, setFrameIndex] = useState(0)
-  const [lessonStep, setLessonStep] = useState(0)
-  const [lessonOn, setLessonOn] = useState(() => localStorage.getItem(FIRST_LOOK_KEY) !== 'seen')
   const [contrast, setContrast] = useState(2)
   const [mask, setMask] = useState(false)
   const [maskNote, setMaskNote] = useState('')
@@ -79,6 +62,9 @@ export function LoadSequence({
       setShown(0)
       setFrames([])
       setFrameIndex(0)
+      setContrast(2)
+      setMask(false)
+      setMaskNote('')
       onEpochRef.current('')
       return
     }
@@ -212,15 +198,17 @@ export function LoadSequence({
   }, [view.layer, view.committed])
 
   if (!view.committed) {
-    return <p className="stage-caption">{GUIDE_CAPTION}</p>
+    return (
+      <p className="stage-caption">
+        {GUIDE_TASK} {GUIDE_CAPTION}
+      </p>
+    )
   }
 
   const frame = frames[frameIndex] ?? null
   const baseline = view.mode === 'subtract' ? (frames[0] ?? null) : null
   const counts = frame ? centerCounts(frame, baseline) : null
   const showPixels = view.layer === 'pixels' && frame != null
-  const showLesson = lessonOn && showPixels
-  const lesson = FIRST_LOOK[lessonStep]
   // One fraction per frame, so a 12-pixel cutout and a wide patch share the line.
   const sources = frames.map((item) => sourceFraction(item))
   // The line appears once the third frame is in view. Positions are fractions of each
@@ -247,6 +235,7 @@ export function LoadSequence({
           mode={view.mode}
           band={view.band}
           frameCount={frames.length}
+          framesReady={phase === 'ready' || phase === 'empty' || phase === 'error'}
           contrast={contrast}
           mask={mask}
           maskNote={maskNote}
@@ -255,31 +244,7 @@ export function LoadSequence({
           onContrast={setContrast}
           onMask={setMask}
         />
-        <p className="stage-caption" hidden={showLesson}>
-          {caption(phase, view.layer, frame, visits.length > 0)}
-        </p>
-      {showLesson ? (
-        <section className="first-look" aria-labelledby="first-look-title">
-          <p className="first-look-step">
-            {lessonStep + 1} of {FIRST_LOOK.length}
-          </p>
-          <h2 id="first-look-title">{lesson.title}</h2>
-          <p>{lesson.body}</p>
-          <button
-            type="button"
-            onClick={() => {
-              if (lessonStep < FIRST_LOOK.length - 1) {
-                setLessonStep(lessonStep + 1)
-                return
-              }
-              localStorage.setItem(FIRST_LOOK_KEY, 'seen')
-              setLessonOn(false)
-            }}
-          >
-            {lessonStep < FIRST_LOOK.length - 1 ? 'Next' : 'Look at the slice'}
-          </button>
-        </section>
-      ) : null}
+        <p className="stage-caption">{caption(phase, view.layer, frame, visits.length > 0)}</p>
       </div>
       <div ref={layerRef} className="layer-toggle">
         <md-outlined-segmented-button-set aria-label="Sky or pixels">
@@ -353,7 +318,7 @@ function caption(phase: Phase, layer: SkyLayer, frame: DetectorFrame | null, has
   if (phase === 'error' && hasVisits) return 'The detector frames did not download.'
   if (phase === 'error') return 'The archive did not answer.'
   if (layer === 'pixels' && frame) {
-    return `${formatVisit(frame.observed)}. Speckles are noise. Follow the brighter knot as you move through the visits.`
+    return `${formatVisit(frame.observed)} · ${frame.wavelengthUm.toFixed(2)} μm. Each square is one detector pixel: one cell on SPHEREx's camera. A bright square collected more infrared.`
   }
   return GUIDE_CAPTION
 }

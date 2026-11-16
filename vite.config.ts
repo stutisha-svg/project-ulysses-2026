@@ -8,6 +8,8 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5173,
     strictPort: true,
+    // A public tunnel sends its own hostname. Localhost-only would reject that link.
+    allowedHosts: true,
     proxy: {
       '/api': 'http://127.0.0.1:8000',
     },

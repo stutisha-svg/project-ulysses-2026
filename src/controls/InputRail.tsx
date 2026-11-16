@@ -28,7 +28,6 @@ const STEP_COUNT = 3
 const STEPS = [
   {
     title: 'Where should we look?',
-    body: 'A city is enough. Coordinates are the next step.',
   },
   {
     title: 'Check the coordinates',
@@ -48,11 +47,23 @@ export function InputRail({ view, collapsed, onToggle, onCommit, onPatch, onComm
   const onCommitRef = useRef(onCommit)
   const onPatchRef = useRef(onPatch)
   const [step, setStep] = useState(() => (view.committed ? 2 : 0))
+  // Opening screen. Start reveals the three aim steps. A committed view skips it.
+  const [started, setStarted] = useState(() => view.committed)
   const [notice, setNotice] = useState('')
   const [locating, setLocating] = useState(false)
 
   onCommitRef.current = onCommit
   onPatchRef.current = onPatch
+
+  useEffect(() => {
+    if (view.committed) {
+      setStarted(true)
+      return
+    }
+    setStarted(false)
+    setStep(0)
+    setNotice('')
+  }, [view.committed])
 
   useEffect(() => {
     const city = cityRef.current
@@ -89,20 +100,20 @@ export function InputRail({ view, collapsed, onToggle, onCommit, onPatch, onComm
       city.removeEventListener('input', onCity)
       patches.removeEventListener('segmented-button-set-selection', onSelection)
     }
-  }, [])
+  }, [started])
 
   useEffect(() => {
     const buttons = patchRef.current?.querySelectorAll('md-outlined-segmented-button')
     buttons?.forEach((node, index) => {
       ;(node as MdSegment).selected = PATCHES[index] === view.patch
     })
-  }, [view.patch])
+  }, [view.patch, started])
 
   useEffect(() => {
     if (view.ra == null || view.dec == null) return
     if (raRef.current) raRef.current.value = view.ra.toFixed(5)
     if (decRef.current) decRef.current.value = view.dec.toFixed(5)
-  }, [view.ra, view.dec, view.source])
+  }, [view.ra, view.dec, view.source, started])
 
   function readTypedAim(): Aim | null {
     const raRaw = raRef.current?.value.trim() ?? ''
@@ -220,26 +231,26 @@ export function InputRail({ view, collapsed, onToggle, onCommit, onPatch, onComm
             </svg>
           </button>
         </div>
-        <p className="step-count" key={step}>
-          Step {step + 1} of {STEP_COUNT}
-        </p>
-        <ol className="dots" aria-hidden="true">
-          {STEPS.map((item, index) => (
-            <li key={item.title} className={index === step ? 'is-current' : undefined} />
-          ))}
-        </ol>
+        {started ? (
+          <>
+            <p className="step-count" key={step}>
+              Step {step + 1} of {STEP_COUNT}
+            </p>
+            <ol className="dots" aria-hidden="true">
+              {STEPS.map((item, index) => (
+                <li key={item.title} className={index === step ? 'is-current' : undefined} />
+              ))}
+            </ol>
+          </>
+        ) : null}
       </header>
       <div className="step-viewport">
+        {started ? (
         <div className="step-track" style={{ '--step': step } as CSSProperties}>
           <div className="step" inert={step !== 0}>
             <p className="prompt">{STEPS[0].title}</p>
-            <p className="hint">{STEPS[0].body}</p>
             <div className="fields">
-              <md-outlined-text-field
-                ref={cityRef}
-                label="City"
-                supportingText="A city name. The sky above it, right now."
-              />
+              <md-outlined-text-field ref={cityRef} label="City" />
               <md-text-button type="button" disabled={locating} onClick={useMyLocation}>
                 {locating ? 'Finding you…' : 'Use my location'}
               </md-text-button>
@@ -247,15 +258,14 @@ export function InputRail({ view, collapsed, onToggle, onCommit, onPatch, onComm
           </div>
           <div className="step" inert={step !== 1}>
             <p className="prompt">{STEPS[1].title}</p>
-            <p className="hint">{STEPS[1].body}</p>
             <div className="fields">
               <md-outlined-text-field ref={raRef} label="Right ascension" supportingText="Degrees, from 0 to 360." />
               <md-outlined-text-field ref={decRef} label="Declination" supportingText="Degrees, from -90 to 90." />
             </div>
+            <p className="hint">{STEPS[1].body}</p>
           </div>
           <div className="step" inert={step !== 2}>
             <p className="prompt">{STEPS[2].title}</p>
-            <p className="hint">{STEPS[2].body}</p>
             <div className="fields">
               <span className="hint" id="patch-label">
                 Patch size
@@ -268,25 +278,55 @@ export function InputRail({ view, collapsed, onToggle, onCommit, onPatch, onComm
               <p className="hint">{PATCH_COPY[view.patch]}</p>
               <p className="drag-note">The center of the map is the aim point.</p>
             </div>
+            <p className="hint">{STEPS[2].body}</p>
           </div>
         </div>
+        ) : (
+          <div className="rail-intro">
+            <p className="prompt">Ulysses uses SPHEREx to start a search for an unidentified planet.</p>
+            <p className="rail-kicker">On this sky</p>
+            <ol className="rail-checks">
+              <li>
+                <span>1</span>
+                The bright spot moved
+              </li>
+              <li>
+                <span>2</span>
+                Cold, not a star
+              </li>
+            </ol>
+            <p className="hint">
+              Outside this sky, the name lists have to miss it, and another night or another telescope has to see the same shift, before anyone calls it an unidentified planet.
+            </p>
+          </div>
+        )}
       </div>
 
       <footer className="rail-footer">
-        <p className="notice" role="status">
-          {notice}
-        </p>
+        {started ? (
+          <p className="notice" role="status">
+            {notice}
+          </p>
+        ) : null}
         <div className="pager">
-          <md-text-button type="button" disabled={step === 0} onClick={() => setStep((current) => Math.max(0, current - 1))}>
-            Back
-          </md-text-button>
-          {step < 2 ? (
-            <md-filled-button type="button" onClick={goNext}>
-              Next
-            </md-filled-button>
+          {started ? (
+            <>
+              <md-text-button type="button" disabled={step === 0} onClick={() => setStep((current) => Math.max(0, current - 1))}>
+                Back
+              </md-text-button>
+              {step < 2 ? (
+                <md-filled-button type="button" onClick={goNext}>
+                  Next
+                </md-filled-button>
+              ) : (
+                <md-filled-button type="button" onClick={inspect}>
+                  Inspect here
+                </md-filled-button>
+              )}
+            </>
           ) : (
-            <md-filled-button type="button" onClick={inspect}>
-              Inspect here
+            <md-filled-button type="button" onClick={() => setStarted(true)}>
+              Start
             </md-filled-button>
           )}
         </div>

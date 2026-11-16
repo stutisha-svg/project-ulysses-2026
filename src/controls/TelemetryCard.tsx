@@ -10,6 +10,7 @@ type TelemetryCardProps = {
   canMark: boolean
   onToggleMark: () => void
   onOverlays: (overlays: boolean) => void
+  onStartOver: () => void
 }
 
 export function TelemetryCard({
@@ -20,11 +21,17 @@ export function TelemetryCard({
   canMark,
   onToggleMark,
   onOverlays,
+  onStartOver,
 }: TelemetryCardProps) {
   if (view.ra == null || view.dec == null) return null
 
   return (
     <section className="telemetry" aria-label="View telemetry">
+      {view.committed ? (
+        <button type="button" className="start-over" onClick={onStartOver}>
+          Start over
+        </button>
+      ) : null}
       <h2>{view.committed ? 'This view' : 'Aim point'}</h2>
       <dl>
         <dt>Coordinates</dt>
@@ -57,7 +64,9 @@ export function TelemetryCard({
           Show marks
         </label>
       </div>
-      {marking ? <p className="mark-hint">Tap the frame. The mark keeps the date on screen.</p> : null}
+      {marking ? (
+        <p className="mark-hint">Tap the knot on this date. Then pick another date and tap it again.</p>
+      ) : null}
     </section>
   )
 }

@@ -6,6 +6,7 @@ import { nextPattern } from './lib/patterns'
 import { GuideMap } from './sky/GuideMap'
 import { LoadSequence } from './sky/LoadSequence'
 import {
+  clearView,
   readView,
   writeView,
   type AimSource,
@@ -33,6 +34,32 @@ export function App() {
     setPatternNote((current) => (current === note ? current : note))
   }, [])
 
+  function startOver() {
+    setEpochSpan('')
+    setPatternNote('')
+    setMarking(false)
+    setGalleryOpen(false)
+    setGalleryNote('')
+    setActivePostId(null)
+    setRailOpen(true)
+    localStorage.setItem('ulysses-rail', 'open')
+    clearView()
+    setView({
+      ra: null,
+      dec: null,
+      patch: 'medium',
+      committed: false,
+      label: '',
+      source: null,
+      layer: 'sky',
+      layerChosen: false,
+      mode: 'blink',
+      band: 'hot',
+      marks: [],
+      overlays: true,
+    })
+  }
+
   function toggleRail() {
     setRailOpen((open) => {
       const next = !open
@@ -41,7 +68,14 @@ export function App() {
     })
   }
 
+  function closeRail() {
+    // A tap on a starter, or on the sky, puts the questions away. The choice stays in this browser.
+    setRailOpen(false)
+    localStorage.setItem('ulysses-rail', 'closed')
+  }
+
   function commit(aim: { ra: number; dec: number; label: string; source: AimSource }) {
+    if (aim.source === 'starter') closeRail()
     setEpochSpan('')
     setMarking(false)
     setActivePostId(null)
@@ -143,11 +177,13 @@ export function App() {
 
   function addMark(point: { observed: string; x: number; y: number; pixelX: number; pixelY: number }) {
     setView((current) => {
-      const pattern = nextPattern(current.marks.length)
-      const next = {
-        ...current,
-        marks: [...current.marks, { ...point, color: pattern.color, name: pattern.name }],
-      }
+      // One mark per visit date. A second tap on the same date moves that mark. It does not count as motion.
+      const sameVisit = current.marks.findIndex((mark) => mark.observed === point.observed)
+      const marks =
+        sameVisit >= 0
+          ? current.marks.map((mark, index) => (index === sameVisit ? { ...mark, ...point } : mark))
+          : [...current.marks, { ...point, ...nextPattern(current.marks.length) }]
+      const next = { ...current, marks }
       if (next.committed) writeView(next)
       return next
     })
@@ -174,6 +210,7 @@ export function App() {
     }
     writeView(next)
     setView(next)
+    closeRail()
   }
 
   function takeSnapshot() {
@@ -220,8 +257,8 @@ export function App() {
           onPatch={setPatch}
           onCommunity={() => setGalleryOpen(true)}
         />
-        <main className="stage">
-          <GuideMap view={view} onCommit={commit} onAim={aimFromMap} />
+        <main className={view.committed ? 'stage is-committed' : 'stage'}>
+          <GuideMap view={view} onCommit={commit} onAim={aimFromMap} onSkyTap={closeRail} />
           <LoadSequence
             view={view}
             marking={marking}
@@ -242,14 +279,15 @@ export function App() {
             canMark={view.committed}
             onToggleMark={toggleMark}
             onOverlays={setOverlays}
+            onStartOver={startOver}
           />
           {view.committed ? (
             <button type="button" className="snapshot-fab" onClick={takeSnapshot}>
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                <path
-                  d="M9 4 7.2 6H4v12h16V6h-3.2L15 4H9zm3 12.2A4.2 4.2 0 1 1 16.2 12 4.2 4.2 0 0 1 12 16.2z"
-                  fill="currentColor"
-                />
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path
+                    d="M9 4 7.2 6H4v12h16V6h-3.2L15 4H9zm3 12.2A4.2 4.2 0 1 1 16.2 12 4.2 4.2 0 0 1 12 16.2z"
+                    fill="currentColor"
+                  />
               </svg>
               Snapshot
             </button>

@@ -31,13 +31,21 @@ export function orderNodes(nodes: PatternNode[]): PatternNode[] {
     .map((item) => item.node)
 }
 
+export function distinctVisitCount(nodes: { observed: string }[]): number {
+  return new Set(nodes.map((node) => node.observed)).size
+}
+
 // Cutout CDELT is 1 degree in pixel coordinates, not a sky plate scale, so arcseconds stay unset.
+// A shift needs two visit dates. Two taps on one date are not motion.
 export function describePattern(nodes: PatternNode[], leftover: number | null): string {
   const ordered = orderNodes(nodes)
   if (ordered.length === 0) return ''
-  if (ordered.length === 1) return 'One mark. Tap another visit to measure the shift.'
-  const start = ordered[ordered.length - 2]
-  const end = ordered[ordered.length - 1]
+  const byVisit = new Map<string, PatternNode>()
+  for (const node of ordered) byVisit.set(node.observed, node)
+  const visits = [...byVisit.values()]
+  if (visits.length < 2) return 'One mark. Tap another visit to measure the shift.'
+  const start = visits[visits.length - 2]
+  const end = visits[visits.length - 1]
   const dx = end.pixelX - start.pixelX
   const dy = end.pixelY - start.pixelY
   const shift = Math.hypot(dx, dy)

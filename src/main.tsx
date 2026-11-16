@@ -18,7 +18,7 @@ const hideSegmentCheck = new MutationObserver(() => {
     const style = document.createElement('style')
     style.dataset.hideCheck = ''
     style.textContent =
-      '.md3-segmented-button{padding-inline:10px!important}.md3-segmented-button__checkmark{display:none!important}.md3-segmented-button--selected .md3-segmented-button__icon{opacity:1!important}.md3-segmented-button--without-icon .md3-segmented-button__leading{display:none!important}.md3-segmented-button--with-icon .md3-segmented-button__graphic{width:var(--_icon-size)!important}'
+      '.md3-segmented-button{padding-inline:10px!important}.md3-segmented-button__checkmark{display:none!important}.md3-segmented-button--selected .md3-segmented-button__icon{opacity:1!important}.md3-segmented-button--without-icon .md3-segmented-button__leading{display:none!important}.md3-segmented-button--with-icon .md3-segmented-button__graphic{width:var(--_icon-size)!important}.md3-segmented-button--selected:disabled .md3-segmented-button__label-text,.md3-segmented-button--selected:disabled .md3-segmented-button__icon{color:#0e0e10!important}'
     shadow.appendChild(style)
   })
 })

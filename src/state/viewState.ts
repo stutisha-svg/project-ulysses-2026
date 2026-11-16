@@ -109,6 +109,11 @@ export function writeView(state: ViewState): void {
   window.history.replaceState(null, '', url)
 }
 
+// Drop the saved aim so a refresh starts the guide tour instead of the last commit.
+export function clearView(): void {
+  window.history.replaceState(null, '', window.location.pathname)
+}
+
 function readDegree(value: string | null, min: number, max: number): number | null {
   if (value == null || value.trim() === '') return null
   const parsed = Number(value)

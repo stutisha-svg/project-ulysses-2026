@@ -5,6 +5,7 @@ type AnalysisBarProps = {
   mode: AnalysisMode
   band: BandGroup
   frameCount: number
+  framesReady: boolean
   contrast: number
   mask: boolean
   maskNote: string
@@ -45,6 +46,7 @@ export function AnalysisBar({
   mode,
   band,
   frameCount,
+  framesReady,
   contrast,
   mask,
   maskNote,
@@ -149,7 +151,18 @@ export function AnalysisBar({
           </label>
         </div>
       ) : null}
-      <p className="analysis-copy">{explanation(mode, band, frameCount, reduced, active.tip)}</p>
+      <p className="analysis-copy">{explanation(mode, band, frameCount, framesReady, reduced, active.tip)}</p>
+      {mode === 'bands' ? (
+        // Two toggles stand in for 102 channels. This note is the grouping rule.
+        <details className="band-logic">
+          <summary>Why two groups</summary>
+          <p>
+            SPHEREx records 102 wavelength channels, about 0.75–5 μm, on six detectors.
+            Hot folds D1 and D2, about 0.75–1.6 μm. Cold folds D4, D5, and D6, about 2.4–5 μm.
+            D3 is in neither toggle. Blink stays inside the group you pick. It does not step the 102 channels.
+          </p>
+        </details>
+      ) : null}
       {mode === 'signal' && mask ? <p className="analysis-copy">{maskNote}</p> : null}
     </div>
   )
@@ -159,6 +172,7 @@ function explanation(
   mode: AnalysisMode,
   band: BandGroup,
   frameCount: number,
+  framesReady: boolean,
   reduced: boolean,
   tip: string,
 ): string {
@@ -166,6 +180,7 @@ function explanation(
     band === 'hot'
       ? 'Hot is the short infrared, about 0.9–1.4 μm.'
       : 'Cold is the longer infrared, about 3–5 μm.'
+  if ((mode === 'blink' || mode === 'subtract') && !framesReady) return 'Opening these visits.'
   if (mode === 'blink' && frameCount < 2) return 'Need a second visit to blink.'
   if (mode === 'subtract' && frameCount < 2) return 'Need a second visit to subtract.'
   if (mode === 'blink' && reduced) return `${group} Motion is reduced. Move through the visits to blink.`

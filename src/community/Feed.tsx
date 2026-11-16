@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { STARTERS } from '../data/starters'
-import type { PatternNode } from '../lib/patterns'
+import { distinctVisitCount, type PatternNode } from '../lib/patterns'
 import type { AnalysisMode, BandGroup, PatchSize, SkyLayer } from '../state/viewState'
 
 export type GalleryComment = { by: string; text: string }
@@ -301,8 +301,14 @@ function madeLine(post: SnapshotPost): string {
   }[post.mode]
   const picture = post.layer === 'pixels' ? 'detector pixels' : 'the guide map'
   const span = post.epochSpan ? ` Visits ${post.epochSpan}.` : ''
-  const marks = post.marks.length === 1 ? ' 1 mark.' : ` ${post.marks.length} marks.`
-  return `${mode}, ${post.band} band, ${post.patch} patch, ${picture}.${span}${post.marks.length ? marks : ''}`
+  const visits = distinctVisitCount(post.marks)
+  const marks =
+    post.marks.length === 0
+      ? ''
+      : visits < 2
+        ? ' Marks are on one visit, so this is not a measured shift.'
+        : ` ${post.marks.length} marks across ${visits} visits.`
+  return `${mode}, ${post.band} band, ${post.patch} patch, ${picture}.${span}${marks}`
 }
 
 function guideThumb(ra: number, dec: number): string {

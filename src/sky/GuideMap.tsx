@@ -7,13 +7,16 @@ type GuideMapProps = {
   view: ViewState
   onCommit: (aim: { ra: number; dec: number; label: string; source: AimSource }) => void
   onAim: (aim: { ra: number; dec: number }) => void
+  onSkyTap: () => void
 }
 
 // Planned guide is the unWISE color HiPS. CDS is down from this machine:
 // https://alasky.cds.unistra.fr/unWISE/color-W2-W1W2-W1
-// ESA DSS color is the live stand-in so the tour has a sky. It is visible light.
-// The full URL is required; a bare survey id is fetched from this app.
-const GUIDE_HIPS = 'https://skies.esac.esa.int/DSSColor'
+// Visible-light stand-in is the same DSS color survey. ESA's copy timed out,
+// and the CDS copy returns 404 from this machine. IRSA mirrors it and sends
+// Access-Control-Allow-Origin: *. The full URL is required; a bare survey id
+// is fetched from this app.
+const GUIDE_HIPS = 'https://irsa.ipac.caltech.edu/data/hips/CDS/DSS2/color'
 // Tangent plane: the stage stays a flat window. A wide sine projection draws a globe.
 // One field for the whole tour. Commit is what zooms in.
 const TOUR_FOV_DEG = 40
@@ -23,13 +26,14 @@ const HIT_PX = 22
 
 type Pixel = { x: number; y: number }
 
-export function GuideMap({ view, onCommit, onAim }: GuideMapProps) {
+export function GuideMap({ view, onCommit, onAim, onSkyTap }: GuideMapProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const aladinRef = useRef<AladinView | null>(null)
   const programmatic = useRef(false)
   const onAimRef = useRef(onAim)
   const onCommitRef = useRef(onCommit)
+  const onSkyTapRef = useRef(onSkyTap)
   const pointerRef = useRef<{ x: number; y: number } | null>(null)
   const resumeTour = useRef<(() => void) | null>(null)
   const userHold = useRef(false)
@@ -43,6 +47,7 @@ export function GuideMap({ view, onCommit, onAim }: GuideMapProps) {
 
   onAimRef.current = onAim
   onCommitRef.current = onCommit
+  onSkyTapRef.current = onSkyTap
 
   // A drag may set ra before a commit. The tour keeps panning until the user commits.
   const touring = !view.committed
@@ -212,17 +217,40 @@ export function GuideMap({ view, onCommit, onAim }: GuideMapProps) {
       }, 1600)
       return
     }
+    // A tap on a starter, or on empty sky, hides the question pane and opens the sky controls.
+    onSkyTapRef.current()
+    // The card sits beside the dot. A tap on the card commits that starter.
+    const onLabel = event.target instanceof Element && event.target.closest('.starter-label')
+    if (onLabel) {
+      const labeled = highlightedStarter(viewRef.current, tourIndexRef.current)
+      if (labeled) {
+        onCommitRef.current({
+          ra: labeled.ra,
+          dec: labeled.dec,
+          label: labeled.title,
+          source: 'starter',
+        })
+        return
+      }
+    }
     const rect = host.getBoundingClientRect()
     const hit = starterAt(sky, event.clientX - rect.left, event.clientY - rect.top, rect.width, rect.height)
-    if (!hit) {
-      if (touringRef.current) resumeTour.current?.()
+    if (hit) {
+      onCommitRef.current({
+        ra: hit.ra,
+        dec: hit.dec,
+        label: hit.title,
+        source: 'starter',
+      })
       return
     }
+    if (viewRef.current.committed) return
+    const [ra, dec] = sky.getRaDec()
     onCommitRef.current({
-      ra: hit.ra,
-      dec: hit.dec,
-      label: hit.title,
-      source: 'starter',
+      ra,
+      dec,
+      label: 'Map center',
+      source: 'drag',
     })
   }
 
