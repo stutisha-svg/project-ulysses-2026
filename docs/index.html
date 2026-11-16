@@ -3,21 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Project Ulysses — SPHEREx triage</title>
+  <title>Project Ulysses</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #0e0e10;
       --ink: #f4f4f6;
-      --muted: rgba(244, 244, 246, 0.62);
+      --muted: rgba(244, 244, 246, 0.72);
       --line: rgba(244, 244, 246, 0.16);
       --card: #17171b;
       --amber: #ffd54f;
-      --amber-deep: #ffb300;
-      --slide-w: 1280px;
-      --slide-h: 720px;
     }
 
     * { box-sizing: border-box; }
@@ -30,259 +27,254 @@
       font-family: Roboto, "Segoe UI", sans-serif;
     }
 
-    body {
-      overflow: hidden;
-    }
+    body { overflow: hidden; }
 
-    .viewport {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-    }
+    .viewport { position: relative; width: 100vw; height: 100vh; }
 
     .slide {
       display: none;
       position: absolute;
       left: 50%;
       top: 50%;
-      width: var(--slide-w);
-      height: var(--slide-h);
+      width: 1280px;
+      height: 720px;
       transform: translate(-50%, -50%) scale(var(--fit, 1));
-      transform-origin: center center;
-      padding: 52px 64px 40px;
+      padding: 44px 56px 32px;
       background:
-        radial-gradient(900px 420px at 100% 0%, rgba(255, 179, 0, 0.08), transparent 60%),
+        radial-gradient(820px 380px at 100% 0%, rgba(255, 213, 79, 0.1), transparent 58%),
         var(--bg);
-      position: relative;
       overflow: hidden;
     }
 
     .slide.is-on { display: flex; flex-direction: column; }
-
-    .kicker {
-      margin: 0 0 18px;
-      color: var(--amber);
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
 
     h1, h2, p { margin: 0; }
 
     h1 {
       font-size: 84px;
       line-height: 0.92;
-      font-weight: 700;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.035em;
     }
 
-    h1 span { color: var(--amber); }
+    h1 span, .amber { color: var(--amber); }
 
     h2 {
-      max-width: 16ch;
-      font-size: 48px;
+      max-width: 18ch;
+      font-size: 42px;
       line-height: 1.02;
-      font-weight: 700;
       letter-spacing: -0.03em;
     }
 
     .sub {
-      max-width: 34ch;
+      max-width: 28ch;
       margin-top: 28px;
-      color: var(--ink);
-      font-size: 26px;
-      line-height: 1.3;
+      font-size: 28px;
+      line-height: 1.25;
       font-weight: 400;
-    }
-
-    .meta {
-      display: flex;
-      gap: 10px;
-      margin-top: auto;
-      padding-top: 28px;
-    }
-
-    .chip {
-      padding: 8px 12px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--muted);
-      font-size: 14px;
     }
 
     .foot {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      gap: 16px;
       margin-top: auto;
-      padding-top: 18px;
+      padding-top: 16px;
       color: var(--muted);
-      font-size: 13px;
-      letter-spacing: 0.08em;
+      font-size: 14px;
+      letter-spacing: 0.04em;
     }
 
     .metrics {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin-top: 36px;
-    }
-
-    .metric, .card, .pillar, .step, .col {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-    }
-
-    .metric {
-      min-height: 250px;
-      padding: 28px 26px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .metric b {
-      color: var(--amber);
-      font-size: 64px;
-      line-height: 0.95;
-      letter-spacing: -0.04em;
-    }
-
-    .metric strong {
-      display: block;
-      margin-top: 18px;
-      font-size: 20px;
-      font-weight: 500;
-    }
-
-    .metric span, .note, .cell small, .step p, .pillar p, .col li span {
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.35;
-    }
-
-    .take {
-      margin-top: 22px;
-      padding: 16px 20px;
-      border-left: 4px solid var(--amber);
-      background: rgba(255, 213, 79, 0.08);
-      font-size: 20px;
-      line-height: 1.35;
-    }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-top: 28px;
-      flex: 1;
-    }
-
-    .col { padding: 22px 24px 8px; }
-
-    .col h3 {
-      margin: 0 0 8px;
-      font-size: 22px;
-      font-weight: 500;
-    }
-
-    .col.bad h3 { color: var(--muted); }
-    .col.good h3 { color: var(--amber); }
-
-    .col ol, .col ul {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .col li {
-      display: grid;
-      gap: 4px;
-      padding: 14px 0;
-      border-top: 1px solid var(--line);
-    }
-
-    .col li b { font-size: 18px; font-weight: 500; }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-top: 28px;
-    }
-
-    .step { padding: 20px 18px 18px; min-height: 390px; }
-
-    .step i {
-      display: grid;
-      place-items: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--amber);
-      color: #1a1400;
-      font-style: normal;
-      font-weight: 700;
-    }
-
-    .step h3 {
-      margin: 18px 0 10px;
-      font-size: 22px;
-      line-height: 1.15;
-      font-weight: 500;
-    }
-
-    .pillars {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
       margin-top: 28px;
     }
 
-    .pillar { padding: 24px 22px; min-height: 340px; }
-
-    .pillar h3 {
-      margin: 14px 0 12px;
-      font-size: 26px;
-      line-height: 1.15;
-      font-weight: 500;
-    }
-
-    .url {
-      margin-top: 22px;
-      padding: 14px 16px;
-      border-radius: 12px;
-      background: #101014;
+    .metric {
+      min-height: 210px;
+      padding: 24px 22px;
       border: 1px solid var(--line);
-      color: var(--amber);
-      font-family: "Roboto Mono", ui-monospace, monospace;
-      font-size: 18px;
+      border-radius: 18px;
+      background: var(--card);
     }
 
-    .demo {
-      margin-top: 28px;
-      font-size: 40px;
-      line-height: 1.15;
-      font-weight: 500;
-      letter-spacing: -0.03em;
+    .metric b {
+      display: block;
       color: var(--amber);
+      font-size: 54px;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
     }
 
-    .row3 {
+    .metric span, .story, .col p, .pin span {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .metric span { display: block; margin-top: 14px; color: var(--ink); font-size: 18px; }
+
+    .story {
+      margin-top: 22px;
+      max-width: 78ch;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 22px;
+      margin-top: 18px;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .col p + p { margin-top: 14px; }
+
+    .col strong, .pin b { color: var(--ink); font-weight: 500; }
+
+    .stage {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .stage img {
+      width: 100%;
+      height: 340px;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #000;
+    }
+
+    .pins {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-top: 28px;
+      gap: 8px;
     }
 
-    .row3 div {
-      padding: 18px 16px;
+    .pin {
+      padding: 10px 10px 12px;
       border-top: 3px solid var(--amber);
+      background: var(--card);
+      border-radius: 0 0 12px 12px;
     }
 
-    .row3 b { display: block; font-size: 22px; font-weight: 500; }
-    .row3 span { color: var(--muted); font-size: 15px; }
+    .pin b { display: block; font-size: 14px; line-height: 1.3; }
+
+    .versus {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .versus article {
+      padding: 20px 22px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--card);
+    }
+
+    .versus h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .versus p { color: var(--muted); font-size: 17px; line-height: 1.4; }
+
+    .close-sub {
+      margin-top: 28px;
+      color: var(--amber);
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .payoff h2 { max-width: 16ch; font-size: 40px; }
+
+    .payoff-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      margin-top: 16px;
+      min-height: 0;
+    }
+
+    .payoff-grid img {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      object-position: left center;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+    }
+
+    .moves {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .moves article {
+      padding: 12px 12px 14px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+    }
+
+    .moves i {
+      display: block;
+      color: var(--amber);
+      font-style: normal;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      font-weight: 700;
+    }
+
+    .moves b {
+      display: block;
+      margin: 4px 0 4px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .moves span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .outcome {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 18px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: var(--amber);
+      color: #1a1400;
+    }
+
+    .outcome b {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+    }
+
+    .outcome p {
+      color: #1a1400;
+      font-size: 22px;
+      line-height: 1.25;
+      font-weight: 500;
+    }
 
     .keys {
       position: fixed;
@@ -294,7 +286,7 @@
     }
 
     @media print {
-      body { overflow: visible; background: white; }
+      body { overflow: visible; background: #fff; }
       .viewport { display: block; height: auto; }
       .slide {
         display: flex !important;
@@ -304,8 +296,8 @@
         transform: none;
         break-after: page;
         page-break-after: always;
-        -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
       }
       .keys { display: none; }
     }
@@ -315,154 +307,115 @@
 </head>
 <body>
   <main class="viewport" id="deck">
-    <section class="slide is-on" aria-label="Title">
-      <p class="kicker">NASA Space Apps Challenge 2026</p>
+    <section class="slide is-on" aria-label="Cover">
       <h1>PROJECT<br /><span>ULYSSES</span></h1>
-      <p class="sub">Human-in-the-loop data triage for NASA’s $340M SPHEREx all-sky survey.</p>
-      <div class="meta">
-        <span class="chip">Planet X &amp; SPHEREx</span>
-        <span class="chip">Built for NASA / Caltech IRSA</span>
-        <span class="chip">Public SIA · no API key</span>
-      </div>
-      <div class="foot"><span>01 / 07</span><span>← →</span></div>
+      <p class="sub">Turning Public Curiosity into Verified Data Triage for NASA’s SPHEREx Mission</p>
+      <div class="foot"><span>NASA Space Apps 2026 • Planet X &amp; SPHEREx</span><span>01 / 07</span></div>
     </section>
 
-    <section class="slide" aria-label="The data bottleneck">
-      <p class="kicker">The bottleneck</p>
-      <h2>The survey is faster than a specialist’s desk.</h2>
+    <section class="slide" aria-label="The problem">
+      <h2>LOVE SPACE, BUT NO TELESCOPE? No Problem!</h2>
       <div class="metrics">
-        <article class="metric">
-          <b>$340M+</b>
-          <strong>Mission investment</strong>
-          <span>SPHEREx, from build through launch.</span>
-        </article>
-        <article class="metric">
-          <b>6 mo</b>
-          <strong>All-sky spectral map</strong>
-          <span>One complete near-infrared pass about every six months.</span>
-        </article>
-        <article class="metric">
-          <b>102</b>
-          <strong>Bands · 0.75–5.0 μm</strong>
-          <span>6.2″ pixels. Six detector arrays.</span>
-        </article>
+        <article class="metric"><b>$488M</b><span>invested in NASA’s SPHEREx mission</span></article>
+        <article class="metric"><b>1 Billion+</b><span>sky objects mapped every 6 months</span></article>
+        <article class="metric"><b>102</b><span>Infrared bands generating data faster than PhDs can inspect</span></article>
       </div>
-      <p class="take">The cutouts are public. The first look at one patch still sits with a specialist.</p>
-      <div class="foot"><span>02 / 07</span><span>Telescope data has outpaced human bandwidth</span></div>
+      <p class="story">NASA’s SPHEREx generates enormous amounts of data, but existing sky tools look like cockpit dashboards—locking out everyday people and leaving researchers buried in raw telemetry. Project Ulysses simplifies real telescope observations so anyone can explore the cosmos and spot real motion in five minutes.</p>
+      <div class="foot"><span>02 / 07</span><span></span></div>
     </section>
 
-    <section class="slide" aria-label="Why automated pipelines stall">
-      <p class="kicker">The noise floor</p>
-      <h2>Planet X has no training label.</h2>
+    <section class="slide" aria-label="The product">
+      <h2>BE A HERO! IN YOUR COMMUNITY</h2>
       <div class="split">
-        <article class="col bad">
-          <h3>Automated pipeline</h3>
-          <ol>
-            <li><b>No prior image</b><span>A model cannot be trained on an object the archive has never labeled.</span></li>
-            <li><b>The threshold floods</b><span>Lower it, and cosmic-ray spikes and blended stars enter the list.</span></li>
-            <li><b>Faint cases drop out</b><span>The edge of the noise is where an automated cut is least sure.</span></li>
-          </ol>
-        </article>
-        <article class="col good">
-          <h3>A person on two dates</h3>
-          <ol>
-            <li><b>One patch, played in time</b><span>The same spot, visit after visit, one wavelength at a time.</span></li>
-            <li><b>Two dates make the check</b><span>A square that is bright on two nights can be marked. One spike cannot.</span></li>
-            <li><b>3,000+ brown dwarfs</b><span>Backyard Worlds found them by blinking infrared frames.</span></li>
-          </ol>
-        </article>
+        <div class="col">
+          <p>Space exploration shouldn’t be limited to people behind a telescope. With Project Ulysses, everyday people become citizen scientists—learning to read real SPHEREx infrared imagery, subtracting static stars, and flagging moving objects that deserve a closer look.</p>
+          <p>They aren’t just watching discoveries happen. They’re helping NASA decide where to look next—with zero learning curve.</p>
+        </div>
+        <div class="stage">
+          <img src="slides/ulysses-motion.gif" alt="Ulysses stepping through SPHEREx visits, subtract, and Hot and Cold" />
+          <div class="pins">
+            <div class="pin"><b>1. Live NASA DR1 Data</b></div>
+            <div class="pin"><b>2. Static Stars Erased</b></div>
+            <div class="pin"><b>3. Hot vs. Cold Thermal View</b></div>
+          </div>
+        </div>
       </div>
-      <div class="foot"><span>03 / 07</span><span>Human review where the label does not exist</span></div>
+      <div class="foot"><span>03 / 07</span><span></span></div>
     </section>
 
-    <section class="slide" aria-label="The operational gap">
-      <p class="kicker">The handoff</p>
-      <h2>From a sky viewer to a marked frame.</h2>
+    <section class="slide" aria-label="The ecosystem">
+      <h2>BRIDGING THE GAP: PEOPLE ↔ NASA</h2>
       <div class="split">
-        <article class="col bad">
-          <h3>Open the archive raw</h3>
-          <ul>
-            <li><b>A separate sky tool</b><span>Find the field, then leave it to fetch the files.</span></li>
-            <li><b>102 channels, loose</b><span>The detector list is the interface.</span></li>
-            <li><b>Nothing is kept</b><span>A click does not store the date, the pixel, or the link.</span></li>
-          </ul>
-        </article>
-        <article class="col good">
-          <h3>Ulysses, one sitting</h3>
-          <ul>
-            <li><b>Three steps, then the frame</b><span>Place, patch, inspect. Tight, medium, or wide.</span></li>
-            <li><b>Two groups, four operations</b><span>Hot or Cold. Blink, subtract, bands, signal.</span></li>
-            <li><b>The link keeps the work</b><span>Coordinates, mode, band, and marks reopen together.</span></li>
-          </ul>
-        </article>
+        <div class="col">
+          <p><strong>The Public Contributes Observations.</strong> Users trace moving light across dates and capture snapshots that lock their exact coordinates and settings in the URL—giving <strong>NASA’s SPHEREx Science &amp; Archive Team (Caltech/IPAC)</strong> peer-audited candidates instead of noisy guesses.</p>
+          <p><strong>NASA Contributes Scientific Judgment.</strong> Pre-vetted snapshots cut expensive PhD manual triage, require zero server overhead, and generate clean labeled data to train future models—while experts share findings back with the community.</p>
+        </div>
+        <div class="stage">
+          <img src="slides/ulysses-trace.gif" alt="Ulysses marks across two dates and saves a snapshot" />
+          <div class="pins">
+            <div class="pin"><b>1. Trace Real Motion</b></div>
+            <div class="pin"><b>2. URL-Locked Proof</b></div>
+            <div class="pin"><b>3. Direct Handoff to NASA/IPAC</b></div>
+          </div>
+        </div>
       </div>
-      <p class="take">Designed so the first marked frame takes under five minutes.</p>
-      <div class="foot"><span>04 / 07</span><span>First look &lt; 5 min</span></div>
+      <div class="foot"><span>04 / 07</span><span></span></div>
     </section>
 
-    <section class="slide" aria-label="How Ulysses works">
-      <p class="kicker">The mechanism</p>
-      <h2>Four operations. Live DR1.</h2>
-      <div class="steps">
-        <article class="step">
-          <i>1</i>
-          <h3>IRSA SIA</h3>
-          <p>Collection <b style="color:var(--ink)">spherex_dr1</b>. One position. Cutouts at 0.02°, 0.05°, or 0.15°. Up to 6 visits.</p>
+    <section class="slide" aria-label="Humans and machines">
+      <h2>MACHINES PROCESS, HUMANS EXPLORE</h2>
+      <div class="versus">
+        <article>
+          <h3>Why AI Hits a Wall</h3>
+          <p>Planet X has never been photographed—AI has <strong class="amber">zero training examples</strong> to learn from, and turning sensitivity up to catch faint objects floods scientists with <strong class="amber">millions of false positives</strong>.</p>
         </article>
-        <article class="step">
-          <i>2</i>
-          <h3>Hot or Cold</h3>
-          <p>102 channels fold into two groups. Hot is D1–D2. Cold is D4–D6. Each frame is one visit, one wavelength.</p>
-        </article>
-        <article class="step">
-          <i>3</i>
-          <h3>Difference and flags</h3>
-          <p>Subtract is this visit minus the first, in gray. Signal &amp; Noise can hide pixels a flag or the variance marks unusable.</p>
-        </article>
-        <article class="step">
-          <i>4</i>
-          <h3>Pattern ID</h3>
-          <p>Two taps on two dates report the shift in frame pixels. The counts stay the archive values. The picture is a grayscale.</p>
+        <article>
+          <h3>Why Human Eyes Win</h3>
+          <p>Human pattern recognition spots subtle moving anomalies in noisy frames without 50,000 training labels—which is why citizen scientists have already discovered <strong class="amber">3,000+ brown dwarfs</strong> that algorithms missed.</p>
         </article>
       </div>
-      <div class="foot"><span>05 / 07</span><span>Read-only cutouts · shift in frame pixels</span></div>
+      <p class="story">AI can accelerate processing, but Project Ulysses celebrates the irreplaceable spark of human curiosity—inviting everyday people to step in, hone their scientific instincts, and leave their mark on what we find.</p>
+      <div class="foot"><span>05 / 07</span><span></span></div>
     </section>
 
-    <section class="slide" aria-label="What an institution gets">
-      <p class="kicker">Built for NASA / Caltech IRSA</p>
-      <h2>The view travels as a link.</h2>
-      <div class="pillars">
-        <article class="pillar">
-          <p class="kicker">01</p>
-          <h3>State in the URL</h3>
-          <p>Right ascension, declination, patch, mode, band, and marks. A refresh opens the same analysis.</p>
-        </article>
-        <article class="pillar">
-          <p class="kicker">02</p>
-          <h3>Snapshot on the device</h3>
-          <p>The picture, the marks, and those settings stay in this browser. The gallery can hold a comment and reopen the sky.</p>
-        </article>
-        <article class="pillar">
-          <p class="kicker">03</p>
-          <h3>Public lookup, no key</h3>
-          <p>The server asks IRSA SIA for spherex_dr1 at the position in the link. The archive file is only read.</p>
-        </article>
+    <section class="slide payoff" aria-label="The payoff">
+      <h2>FOUR MOVES. THEN A CANDIDATE.</h2>
+      <div class="payoff-grid">
+        <img src="slides/ulysses-trace.gif" alt="A marked shift on a subtracted SPHEREx frame" />
+        <div class="moves">
+          <article>
+            <i>01</i>
+            <b>Two groups, not 102</b>
+            <span>Hot or Cold. One visit, one wavelength. The dial stops there.</span>
+          </article>
+          <article>
+            <i>02</i>
+            <b>Nights, in order</b>
+            <span>Up to six real DR1 visits. Blink plays them in time.</span>
+          </article>
+          <article>
+            <i>03</i>
+            <b>This visit minus the first</b>
+            <span>Light got brighter. Dark got fainter. The still sky falls back.</span>
+          </article>
+          <article>
+            <i>04</i>
+            <b>Two taps, two dates</b>
+            <span>The shift is written in frame pixels. The link reopens those marks.</span>
+          </article>
+        </div>
       </div>
-      <p class="url">?ra=15.00000&amp;dec=15.00000&amp;patch=medium&amp;mode=blink&amp;band=hot</p>
-      <div class="foot"><span>06 / 07</span><span>Same parameters a peer can open</span></div>
+      <div class="outcome">
+        <b>THE OUTCOME</b>
+        <p>The first blink leaves the specialist’s desk. What comes back is a marked frame and a link.</p>
+      </div>
+      <div class="foot"><span>06 / 07</span><span>Usable enough to hand off</span></div>
     </section>
 
     <section class="slide" aria-label="Close">
-      <p class="kicker">Live demo</p>
-      <h2>One patch. Real visits. A mark.</h2>
-      <p class="demo">project-ulysses.onrender.com</p>
-      <div class="row3">
-        <div><b>Visits</b><span>Up to six dates from SPHEREx DR1.</span></div>
-        <div><b>Two checks</b><span>Did the spot move. Is it cold, rather than a star.</span></div>
-        <div><b>Snapshot</b><span>Frame and marks, kept on the device.</span></div>
-      </div>
-      <p class="take">A candidate to pass on. The name lists, and another night, still sit outside this tool.</p>
-      <div class="foot"><span>07 / 07</span><span>Questions</span></div>
+      <h2>JOIN US ON THIS JOURNEY!</h2>
+      <p class="close-sub">QUESTIONS?</p>
+      <div class="foot"><span>Project Ulysses • Open-Standard URL Triage for NASA’s SPHEREx Archive</span><span>07 / 07</span></div>
     </section>
   </main>
   <p class="keys">← → to move · P to print</p>
@@ -474,14 +427,14 @@
       const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720)
       document.documentElement.style.setProperty('--fit', String(scale))
     }
-    fit()
-    window.addEventListener('resize', fit)
 
     function show(next) {
       index = (next + slides.length) % slides.length
       slides.forEach((slide, i) => slide.classList.toggle('is-on', i === index))
     }
 
+    fit()
+    window.addEventListener('resize', fit)
     document.addEventListener('keydown', (event) => {
       if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
         event.preventDefault()
@@ -489,18 +442,12 @@
       } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
         event.preventDefault()
         show(index - 1)
-      } else if (event.key === 'Home') {
-        show(0)
-      } else if (event.key === 'End') {
-        show(slides.length - 1)
-      } else if (event.key === 'p' || event.key === 'P') {
-        window.print()
-      }
+      } else if (event.key === 'Home') show(0)
+      else if (event.key === 'End') show(slides.length - 1)
+      else if (event.key === 'p' || event.key === 'P') window.print()
     })
-
     document.getElementById('deck').addEventListener('click', (event) => {
-      const x = event.clientX / window.innerWidth
-      show(index + (x > 0.5 ? 1 : -1))
+      show(index + (event.clientX / window.innerWidth > 0.5 ? 1 : -1))
     })
   </script>
 </body>
