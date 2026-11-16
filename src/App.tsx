@@ -259,6 +259,7 @@ export function App() {
         />
         <main className={view.committed ? 'stage is-committed' : 'stage'}>
           <GuideMap view={view} onCommit={commit} onAim={aimFromMap} onSkyTap={closeRail} />
+          <p className="si-note">Code written with a language model in Cursor. The sky data is from the archives.</p>
           <LoadSequence
             view={view}
             marking={marking}
